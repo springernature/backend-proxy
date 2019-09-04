@@ -1,0 +1,6 @@
+{
+  "$config": {
+    "template": "form"
+  },
+  "postResponse": "String from mocked POST request"
+}

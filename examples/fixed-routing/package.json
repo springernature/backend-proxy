@@ -1,0 +1,17 @@
+{
+  "name": "fixed-routing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "fixed-routing.js",
+  "scripts": {
+    "start": "node fixed-routing.js"
+  },
+  "keywords": [],
+  "author": "Springer Nature",
+  "license": "MIT",
+  "dependencies": {
+    "@springernature/backend-proxy": "file:../..",
+    "express": "^4.17.1",
+    "express-handlebars": "^3.1.0"
+  }
+}

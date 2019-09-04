@@ -10,20 +10,14 @@ const app = new express();
 
 // We cheat for this example and host the backend within the app itself
 const api = new express.Router();
-api.get('/', (req, res) => {
+api.get('/first', (req, res) => {
 	res.json({
-		$config: {
-			template: 'home'
-		},
-		time: new Date()
+		string: "Hello from first route"
 	});
 });
-api.get('/other', (req, res) => {
+api.get('/second', (req, res) => {
 	res.json({
-		$config: {
-			template: 'other'
-		},
-		string: 'Hello world!'
+		string: 'Hello from second route'
 	});
 });
 app.use('/api', api);
@@ -31,11 +25,19 @@ app.use('/api', api);
 app.engine('handlebars', handlebars());
 app.set('view engine', 'handlebars');
 
-app.use(backendProxy({
-	backend: 'http://localhost:8080/api'
-}));
+app.get('/', backendProxy({
+	backend: 'http://localhost:8080/api/first',
+	usePath: false
+}), (req, res) => {
+	res.render('just-text', req.backendResponse);
+});
 
-app.use(renderBackendResponse());
+app.get('/other', backendProxy({
+	backend: 'http://localhost:8080/api/second',
+	usePath: false
+}), (req, res) => {
+	res.render('just-text', req.backendResponse);
+});
 
 app.listen(8080, (error) => {
 	if (error) {
