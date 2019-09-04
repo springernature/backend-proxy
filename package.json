@@ -1,0 +1,36 @@
+{
+  "name": "@springernature/backend-proxy",
+  "version": "1.0.0",
+  "description": "Proxies frontend requests to a backend and can render the result",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --coverage",
+    "test:watch": "jest --watch --testPathIgnorePatterns integration-tests"
+  },
+  "engines": {
+    "node": ">= 8.3.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/springernature/backend-proxy.git"
+  },
+  "bugs": "https://github.com/springernature/backend-proxy/issues",
+  "homepage": "https://github.com/springernature/backend-proxy",
+  "keywords": [
+    "proxy",
+    "render proxy",
+    "express",
+    "connect",
+    "reverse proxy"
+  ],
+  "author": "Springer Nature",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "express": "^4.17.1",
+    "jest": "~24.7.1"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  }
+}
