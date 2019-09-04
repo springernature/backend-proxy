@@ -21,7 +21,7 @@ npm install --save @springernature/backend-proxy
 The `backend-proxy` middleware will take all incoming HTTP requests and forward them to a backend service. The backend response will then be stored on the original HTTP request to be used by your application, or automatically rendered using `render-backend-response`.
 
 ```js
-const {backendProxy} = require('@springernature/backendProxy');
+const {backendProxy} = require('@springernature/backend-proxy');
 
 // Proxy all requests to a backend
 app.use('*', backendProxy({backend: 'http://my.backend'}));
@@ -50,7 +50,7 @@ The following table describe the properties of the `options` object.
 The `renderBackendResponse` renders any request which has a `backendResponse` on it. The backend response needs to contain a field named `$config` (the name can be changed) which contains the template to render, and layout if needed.
 
 ```js
-const {backendProxy, renderBackendResponse} = require('@springernature/backendProxy');
+const {backendProxy, renderBackendResponse} = require('@springernature/backend-proxy');
 
 app.use('*', backendProxy({
     backend: 'http://my.backend'
@@ -81,6 +81,7 @@ Development only middleware that will match incoming requests to a _json_ file, 
 _Note: This middleware will throw an exception if it is run in production_
 
 ```js
+const {mockBackendResponse, renderBackendResponse} = require('@springernature/backend-proxy');
 app.use(mockBackendResponse({
     directory: path.resolve(__dirname, 'backend-mocks')
 }));
