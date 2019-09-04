@@ -92,7 +92,7 @@ The following table describe the properties of the `options` object.
 
 | *Property* | *Description* | *Type* | *Default* |
 |-------------|------------------------------------------------------------------------------------|--------|-------------------|
-| ``directory | Directory to look for mock files in | string |  |
+| `directory` | Directory to look for mock files in | string |  |
 | `key` | The property on the request object that the backend response will be stored under. | string | `backendResponse` |
 
 #### File structure
