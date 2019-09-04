@@ -3,7 +3,7 @@ const EventEmitter = require('events');
 jest.mock('http');
 const {request} = require('http');
 
-const {backendProxy} = require('../src/backend-proxy');
+const {backendProxy} = require('../../src/backend-proxy');
 
 describe('Backend Proxy', () => {
 	const baseOptions = {
@@ -86,7 +86,7 @@ describe('Backend Proxy', () => {
 		const middleware = backendProxy({
 			...baseOptions,
 			usePath: false,
-			backend: 'http://backend.local/sub/path',
+			backend: 'http://backend.local/sub/path'
 		});
 		mockRequest.pipe.mockReturnValueOnce({
 			on: jest.fn()
@@ -132,15 +132,15 @@ describe('Backend Proxy', () => {
 			};
 			backendResponse.pipe = jest.fn();
 
-			const res = {field2: 'value2'};
-			middleware(mockRequest, res, next);
+			const response = {field2: 'value2'};
+			middleware(mockRequest, response, next);
 
 			// When
 			proxyRequest.emit('response', backendResponse);
 
 			// Then
 			expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
-			expect(backendResponse.pipe).toHaveBeenCalledWith(res);
+			expect(backendResponse.pipe).toHaveBeenCalledWith(response);
 			expect(next).not.toHaveBeenCalled();
 		});
 

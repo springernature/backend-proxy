@@ -1,4 +1,4 @@
-const {renderBackendResponse} = require('../src/render-backend-response');
+const {renderBackendResponse} = require('../../src/render-backend-response');
 
 describe('Render Backend Response', () => {
 	const baseOptions = {
@@ -60,16 +60,16 @@ describe('Render Backend Response', () => {
 				layout: 'some-layout'
 			}
 		};
-		const res = {
+		const response = {
 			locals: {},
 			render
 		};
 
 		middleware({
 			[baseOptions.key]: backendResponse
-		}, res);
+		}, response);
 
 		expect(render).toHaveBeenCalledWith(backendResponse.$templateConfig.template, backendResponse);
-		expect(res.locals.layout).toEqual(backendResponse.$templateConfig.layout);
+		expect(response.locals.layout).toEqual(backendResponse.$templateConfig.layout);
 	});
 });

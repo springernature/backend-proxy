@@ -19,17 +19,17 @@ function renderBackendResponse(options) {
 		...options
 	};
 
-	return (req, res, next) => {
-		const backendResponse = req[options.key];
+	return (request, response, next) => {
+		const backendResponse = request[options.key];
 		if (backendResponse) {
 			const templateConfig = backendResponse[options.templateKey];
 
 			if (templateConfig && templateConfig.template) {
 				if (templateConfig.layout) {
-					res.locals.layout = templateConfig.layout;
+					response.locals.layout = templateConfig.layout;
 				}
 
-				return res.render(templateConfig.template, backendResponse);
+				return response.render(templateConfig.template, backendResponse);
 			}
 
 			return next(new MiddlewareError(`Attempted to render a backend response without a ${options.templateKey} section`));
