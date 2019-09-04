@@ -173,6 +173,32 @@ describe('Backend Proxy', () => {
 			expect(next).toHaveBeenCalledTimes(1);
 		});
 
+		test('processes a utf-8 backend response, storing it on the request object', () => {
+			// Given
+			const middleware = backendProxy(baseOptions);
+
+			const backendResponse = new EventEmitter();
+			backendResponse.headers = {
+				'content-type': `${baseOptions.requiredContentType}; charset=utf-8`
+			};
+
+			const backendBody = {
+				field1: 'value1'
+			};
+			const parts = JSON.stringify(backendBody).match(/.{1,2}/g);
+
+			middleware(mockRequest, undefined, next);
+			proxyRequest.emit('response', backendResponse);
+
+			// When
+			parts.forEach(part => backendResponse.emit('data', Buffer.from(part)));
+			backendResponse.emit('end');
+
+			// Then
+			expect(mockRequest[baseOptions.key]).toEqual(backendBody);
+			expect(next).toHaveBeenCalledTimes(1);
+		});
+
 		test('reads the backend response and catches invalid JSON', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
