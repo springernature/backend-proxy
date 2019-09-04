@@ -108,8 +108,6 @@ The `mockBackendResponse` middleware will match incoming requests to files that 
   |____ other_get.json # Matches an HTTP GET to http://localhost:8080/sub-directory/other
 ```
 
-
-
 ## Change Log
 
 [History][history]
