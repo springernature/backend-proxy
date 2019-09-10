@@ -1,0 +1,17 @@
+{
+  "name": "proxy-all",
+  "version": "1.0.0",
+  "description": "",
+  "main": "proxy-all.js",
+  "scripts": {
+    "start": "node proxy-all.js"
+  },
+  "keywords": [],
+  "author": "Springer Nature",
+  "license": "MIT",
+  "dependencies": {
+    "@springernature/backend-proxy": "file:../..",
+    "express": "^4.17.1",
+    "express-handlebars": "^3.1.0"
+  }
+}

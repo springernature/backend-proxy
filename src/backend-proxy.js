@@ -1,8 +1,9 @@
-const {MiddlewareError}  = require('./middleware-error');
-
 const http = require('http');
 const url = require('url');
-const keepAliveAgent = new http.Agent({ keepAlive: true });
+
+const {MiddlewareError} = require('./middleware-error');
+
+const keepAliveAgent = new http.Agent({keepAlive: true});
 
 const defaultOptions = {
 	key: 'backendResponse',
@@ -29,14 +30,12 @@ function backendProxy(options) {
 		...options
 	};
 
-	const backendHttpOptions = url.parse(options.backend);
-	if (backendHttpOptions.path === '/' && options.usePath) {
-		backendHttpOptions.path = '';
-	}
+	const backendHttpOptions = new url.URL(options.backend);
+	const basePath = backendHttpOptions.pathname.replace(/\/$/, '');
 
-	return (req, res, next) => {
+	return (request, response, next) => {
 		// Check if a backend response has already been added (i.e. from mocks)
-		if (req[options.key]) {
+		if (request[options.key]) {
 			return next();
 		}
 
@@ -45,25 +44,25 @@ function backendProxy(options) {
 			host: backendHttpOptions.host,
 			hostname: backendHttpOptions.hostname,
 			port: backendHttpOptions.port,
-			method: req.method,
-			headers: req.headers,
-			path: options.usePath ? backendHttpOptions.path + req.url : backendHttpOptions.path
+			method: request.method,
+			headers: request.headers,
+			path: options.usePath ? basePath + request.url : backendHttpOptions.pathname
 		};
 
 		// Pipe the incoming request through to the backend
-		const proxiedRequest = req.pipe(http.request(requestOptions));
+		const proxiedRequest = request.pipe(http.request(requestOptions));
 
-		proxiedRequest.on('response', backendRes => {
-			const contentType = backendRes.headers['content-type'];
+		proxiedRequest.on('response', backendResponse => {
+			const contentType = backendResponse.headers['content-type'];
 
-			if (contentType === options.requiredContentType) {
+			if (contentType === options.requiredContentType || contentType === `${options.requiredContentType}; charset=utf-8`) {
 				let stringBody = [];
 				// Read the backend response off in chunks then deserialize it
-				backendRes.on('data', chunk => stringBody.push(chunk));
-				backendRes.on('end', () => {
+				backendResponse.on('data', chunk => stringBody.push(chunk));
+				backendResponse.on('end', () => {
 					try {
 						// Supplement req with data from BE
-						req[options.key] = JSON.parse(Buffer.concat(stringBody).toString('utf8'));
+						request[options.key] = JSON.parse(Buffer.concat(stringBody).toString('utf8'));
 						next();
 					} catch (error) {
 						next(new MiddlewareError(error));
@@ -71,11 +70,11 @@ function backendProxy(options) {
 				});
 			} else {
 				// Pipe it back to the client as is
-				backendRes.pipe(res);
+				backendResponse.pipe(response);
 			}
 		});
 
-		proxiedRequest.on('error',error => {
+		proxiedRequest.on('error', error => {
 			next(error);
 		});
 	};

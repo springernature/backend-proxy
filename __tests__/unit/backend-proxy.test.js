@@ -3,7 +3,7 @@ const EventEmitter = require('events');
 jest.mock('http');
 const {request} = require('http');
 
-const {backendProxy} = require('../src/backend-proxy');
+const {backendProxy} = require('../../src/backend-proxy');
 
 describe('Backend Proxy', () => {
 	const baseOptions = {
@@ -86,7 +86,7 @@ describe('Backend Proxy', () => {
 		const middleware = backendProxy({
 			...baseOptions,
 			usePath: false,
-			backend: 'http://backend.local/sub/path',
+			backend: 'http://backend.local/sub/path'
 		});
 		mockRequest.pipe.mockReturnValueOnce({
 			on: jest.fn()
@@ -132,15 +132,15 @@ describe('Backend Proxy', () => {
 			};
 			backendResponse.pipe = jest.fn();
 
-			const res = {field2: 'value2'};
-			middleware(mockRequest, res, next);
+			const response = {field2: 'value2'};
+			middleware(mockRequest, response, next);
 
 			// When
 			proxyRequest.emit('response', backendResponse);
 
 			// Then
 			expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
-			expect(backendResponse.pipe).toHaveBeenCalledWith(res);
+			expect(backendResponse.pipe).toHaveBeenCalledWith(response);
 			expect(next).not.toHaveBeenCalled();
 		});
 
@@ -158,6 +158,32 @@ describe('Backend Proxy', () => {
 				field2: 'value2',
 				field3: 'value3',
 				field4: 'value4'
+			};
+			const parts = JSON.stringify(backendBody).match(/.{1,2}/g);
+
+			middleware(mockRequest, undefined, next);
+			proxyRequest.emit('response', backendResponse);
+
+			// When
+			parts.forEach(part => backendResponse.emit('data', Buffer.from(part)));
+			backendResponse.emit('end');
+
+			// Then
+			expect(mockRequest[baseOptions.key]).toEqual(backendBody);
+			expect(next).toHaveBeenCalledTimes(1);
+		});
+
+		test('processes a utf-8 backend response, storing it on the request object', () => {
+			// Given
+			const middleware = backendProxy(baseOptions);
+
+			const backendResponse = new EventEmitter();
+			backendResponse.headers = {
+				'content-type': `${baseOptions.requiredContentType}; charset=utf-8`
+			};
+
+			const backendBody = {
+				field1: 'value1'
 			};
 			const parts = JSON.stringify(backendBody).match(/.{1,2}/g);
 

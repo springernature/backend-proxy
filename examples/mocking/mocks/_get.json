@@ -1,0 +1,6 @@
+{
+  "$config": {
+    "template": "root"
+  },
+  "string": "hello from _get.json"
+}

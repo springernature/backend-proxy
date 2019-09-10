@@ -1,8 +1,8 @@
-let readFileCb;
+let readFileCallback;
 
 module.exports = {
 	readFile: jest.fn().mockImplementation((path, cb) => {
-		readFileCb = cb;
+		readFileCallback = cb;
 	}),
-	__getReadFileCb: () => readFileCb
+	__getReadFileCallback: () => readFileCallback
 };

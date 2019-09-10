@@ -27,9 +27,9 @@ function mockBackendResponse(options) {
 		...options
 	};
 
-	return (req, res, next) => {
-		const baseFilename = path.join(options.directory, req.url);
-		const method = req.method.toLowerCase();
+	return (request, response, next) => {
+		const baseFilename = path.join(options.directory, request.url);
+		const method = request.method.toLowerCase();
 		const filename = `${baseFilename}_${method}.json`;
 
 		// Only intercept GET & POST requests.
@@ -43,16 +43,16 @@ function mockBackendResponse(options) {
 			}
 
 			try {
-				req[options.key] = JSON.parse(data.toString());
+				request[options.key] = JSON.parse(data.toString());
 				next();
-			} catch (error) {
+			} catch (error_) {
 				const parseError = new MiddlewareError(`Error de-serialising mock response using file ${filename}`);
-				parseError.original = error;
+				parseError.original = error_;
 
 				next(parseError);
 			}
 		});
-	}
+	};
 }
 
 module.exports = {mockBackendResponse};

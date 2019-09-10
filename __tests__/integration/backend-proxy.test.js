@@ -1,8 +1,8 @@
-const express = require('express');
 const http = require('http');
 const EventEmitter = require('events');
+const Express = require('express');
 
-const {backendProxy} = require('../src/backend-proxy');
+const {backendProxy} = require('../../src/backend-proxy');
 
 function resolveRejectError(resolve, reject, error) {
 	if (error) {
@@ -19,7 +19,7 @@ describe('Backend proxy integration', () => {
 
 	beforeAll(async () => {
 		await new Promise((resolve, reject) => {
-			app = new express();
+			app = new Express();
 
 			app.use('/usePathOff', backendProxy({
 				usePath: false,
@@ -34,29 +34,29 @@ describe('Backend proxy integration', () => {
 			}));
 
 			// Always return the backendResponse field as json
-			app.use('*', (req, res) => {
-				res.json(req.backendResponse);
-				res.end();
+			app.use('*', (request, response) => {
+				response.json(request.backendResponse);
+				response.end();
 			});
 
 			app.server = app.listen(9011, error => resolveRejectError(resolve, reject, error));
 		});
 
 		await new Promise((resolve, reject) => {
-			backend = http.createServer((req, res) => {
-				backendEvents.once('response', (response) => {
-					res.setHeader('content-type', 'my/content');
-					res.end(JSON.stringify(response), 'utf8');
+			backend = http.createServer((request, response) => {
+				backendEvents.once('response', backendResponse => {
+					response.setHeader('content-type', 'my/content');
+					response.end(JSON.stringify(backendResponse), 'utf8');
 				});
 
 				backendEvents.emit('request', {
-					req,
-					res
+					request,
+					response
 				});
 			});
 
 			backend.listen(9012, error => resolveRejectError(resolve, reject, error));
-		})
+		});
 	});
 
 	afterAll(async () => {
@@ -75,25 +75,25 @@ describe('Backend proxy integration', () => {
 
 	async function testApp(url, backendResponse, backendAssertions, clientAssertions) {
 		// We use the backendEvents to hook into when a request is received, and then provide a response
-		backendEvents.once('request', ({req, res}) => {
-			backendAssertions(req, res);
+		backendEvents.once('request', ({request, response}) => {
+			backendAssertions(request, response);
 
 			backendEvents.emit('response', backendResponse);
 		});
 
 		return new Promise((resolve, reject) => {
-			http.get(url, res => {
+			http.get(url, response => {
 				let rawData = '';
-				res.on('data', (chunk) => {
+				response.on('data', chunk => {
 					rawData += chunk;
 				});
-				res.on('end', () => {
+				response.on('end', () => {
 					try {
 						const parsedData = JSON.parse(rawData);
-						clientAssertions(res, parsedData);
+						clientAssertions(response, parsedData);
 						resolve();
-					} catch (e) {
-						reject(e);
+					} catch (error) {
+						reject(error);
 					}
 				});
 			});
@@ -102,11 +102,11 @@ describe('Backend proxy integration', () => {
 
 	test('proxies a request with path', async () => {
 		const backendData = {hello: 'world!'};
-		const backendAssertions = (req, res) => {
-			expect(req.url).toEqual('/hello/world');
+		const backendAssertions = (request, _) => {
+			expect(request.url).toEqual('/hello/world');
 		};
-		const clientAssertions = (res, parsedData) => {
-			expect(res.statusCode).toEqual(200);
+		const clientAssertions = (response, parsedData) => {
+			expect(response.statusCode).toEqual(200);
 			expect(parsedData).toEqual(backendData);
 		};
 
@@ -115,11 +115,11 @@ describe('Backend proxy integration', () => {
 
 	test('proxies a request without a path', async () => {
 		const backendData = {hello: 'world 2!'};
-		const backendAssertions = (req, res) => {
-			expect(req.url).toEqual('/');
+		const backendAssertions = (request, _) => {
+			expect(request.url).toEqual('/');
 		};
-		const clientAssertions = (res, parsedData) => {
-			expect(res.statusCode).toEqual(200);
+		const clientAssertions = (response, parsedData) => {
+			expect(response.statusCode).toEqual(200);
 			expect(parsedData).toEqual(backendData);
 		};
 
