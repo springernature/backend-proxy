@@ -49,6 +49,10 @@ function backendProxy(options) {
 			path: options.usePath ? basePath + request.url : backendHttpOptions.pathname
 		};
 
+		if (requestOptions.host) {
+			request.headers.Host = requestOptions.host;
+		}
+
 		// Pipe the incoming request through to the backend
 		const proxiedRequest = request.pipe(http.request(requestOptions));
 
