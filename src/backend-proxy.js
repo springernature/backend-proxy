@@ -51,6 +51,8 @@ function backendProxy(options) {
 
 		if (requestOptions.host) {
 			request.headers.Host = requestOptions.host;
+		if (options.host) {
+			request.headers.host = options.host;
 		}
 
 		// Pipe the incoming request through to the backend
