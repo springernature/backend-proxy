@@ -49,8 +49,6 @@ function backendProxy(options) {
 			path: options.usePath ? basePath + request.url : backendHttpOptions.pathname
 		};
 
-		if (requestOptions.host) {
-			request.headers.Host = requestOptions.host;
 		if (options.host) {
 			request.headers.host = options.host;
 		}
