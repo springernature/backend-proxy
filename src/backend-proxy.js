@@ -58,9 +58,10 @@ function backendProxy(options) {
 
 		proxiedRequest.on('response', backendResponse => {
 			const contentType = backendResponse.headers['content-type'];
+			const lowerCaseContentType = contentType.toLowerCase();
 
-			if (contentType === options.requiredContentType || contentType.toLowerCase() === `${options.requiredContentType}; charset=utf-8`) {
-				let stringBody = [];
+			if (contentType === options.requiredContentType || lowerCaseContentType === `${options.requiredContentType}; charset=utf-8`) {
+				const stringBody = [];
 				// Read the backend response off in chunks then deserialize it
 				backendResponse.on('data', chunk => stringBody.push(chunk));
 				backendResponse.on('end', () => {
