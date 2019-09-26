@@ -57,8 +57,7 @@ function backendProxy(options) {
 		const proxiedRequest = request.pipe(http.request(requestOptions));
 
 		proxiedRequest.on('response', backendResponse => {
-			const contentType = backendResponse.headers['content-type'];
-			const lowerCaseContentType = contentType.toLowerCase();
+			const contentType = backendResponse.headers['content-type'].toLowerCase();
 
 			if (contentType === options.requiredContentType || lowerCaseContentType === `${options.requiredContentType}; charset=utf-8`) {
 				const stringBody = [];
