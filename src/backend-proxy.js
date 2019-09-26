@@ -27,7 +27,8 @@ const defaultOptions = {
 function backendProxy(options) {
 	options = {
 		...defaultOptions,
-		...options
+		...options,
+		requiredContentType: options.requiredContentType.toLowerCase()
 	};
 
 	const backendHttpOptions = new url.URL(options.backend);
