@@ -70,6 +70,8 @@ function backendProxy(options) {
 				});
 			} else {
 				// Pipe it back to the client as is
+				response.statusCode = backendResponse.statusCode;
+				response.header(backendResponse.headers);
 				backendResponse.pipe(response);
 			}
 		});
