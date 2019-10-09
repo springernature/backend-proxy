@@ -128,11 +128,16 @@ describe('Backend Proxy', () => {
 
 			const backendResponse = new EventEmitter();
 			backendResponse.headers = {
-				'content-type': 'not-the-right-one'
+				'content-type': 'not-the-right-one',
+				'dummy-header': 'dummy-value'
 			};
+			backendResponse.statusCode = 302;
 			backendResponse.pipe = jest.fn();
 
-			const response = {field2: 'value2'};
+			const response = {
+				header: jest.fn()
+			};
+
 			middleware(mockRequest, response, next);
 
 			// When
@@ -141,6 +146,8 @@ describe('Backend Proxy', () => {
 			// Then
 			expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
 			expect(backendResponse.pipe).toHaveBeenCalledWith(response);
+			expect(response.header).toHaveBeenCalledWith(backendResponse.headers);
+			expect(response.statusCode).toBe(backendResponse.statusCode);
 			expect(next).not.toHaveBeenCalled();
 		});
 
