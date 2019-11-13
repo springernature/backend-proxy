@@ -64,3 +64,6 @@ typings/
 .env
 dist/
 .DS_Store
+
+# IDE
+.idea/

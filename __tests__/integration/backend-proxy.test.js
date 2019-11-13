@@ -1,129 +1,94 @@
-const http = require('http');
-const EventEmitter = require('events');
-const Express = require('express');
-
+const supertest = require('supertest');
+const nock = require('nock');
+const express = require('express');
 const {backendProxy} = require('../../src/backend-proxy');
 
-function resolveRejectError(resolve, reject, error) {
-	if (error) {
-		reject(error);
-	} else {
-		resolve();
-	}
-}
+const app = express();
+const backend = 'http://localhost:8081';
+
+app.use('/usePathOff', backendProxy({
+	usePath: false,
+	backend: backend,
+	requiredContentType: 'application/x+json'
+}));
+
+app.use('/usePathOn', backendProxy({
+	usePath: true,
+	backend: backend,
+	requiredContentType: 'application/x+json'
+}));
+
+app.use('/changeHostOn', backendProxy({
+	backend: backend,
+	usePath: true,
+	requiredContentType: 'application/x+json',
+	changeHost: true
+}));
+
+// Always return the backendResponse field as json
+app.use('*', (request, response) => {
+	response.json(request.backendResponse);
+	response.end();
+});
 
 describe('Backend proxy integration', () => {
-	let app;
-	let backend;
-	let backendEvents;
-
-	beforeAll(async () => {
-		await new Promise((resolve, reject) => {
-			app = new Express();
-
-			app.use('/usePathOff', backendProxy({
-				usePath: false,
-				backend: 'http://127.0.0.1:9012',
-				requiredContentType: 'my/content'
-			}));
-
-			app.use('/usePathOn', backendProxy({
-				usePath: true,
-				backend: 'http://127.0.0.1:9012',
-				requiredContentType: 'my/content'
-			}));
-
-			// Always return the backendResponse field as json
-			app.use('*', (request, response) => {
-				response.json(request.backendResponse);
-				response.end();
-			});
-
-			app.server = app.listen(9011, error => resolveRejectError(resolve, reject, error));
-		});
-
-		await new Promise((resolve, reject) => {
-			backend = http.createServer((request, response) => {
-				backendEvents.once('response', backendResponse => {
-					response.setHeader('content-type', 'my/content');
-					response.end(JSON.stringify(backendResponse), 'utf8');
-				});
-
-				backendEvents.emit('request', {
-					request,
-					response
-				});
-			});
-
-			backend.listen(9012, error => resolveRejectError(resolve, reject, error));
-		});
-	});
-
-	afterAll(async () => {
-		await new Promise((resolve, reject) => {
-			app.server.close(error => resolveRejectError(resolve, reject, error));
-		});
-
-		await new Promise((resolve, reject) => {
-			backend.close(error => resolveRejectError(resolve, reject, error));
-		});
-	});
+	let request;
 
 	beforeEach(() => {
-		backendEvents = new EventEmitter();
+		request = supertest(app);
 	});
 
-	async function testApp(url, backendResponse, backendAssertions, clientAssertions) {
-		// We use the backendEvents to hook into when a request is received, and then provide a response
-		backendEvents.once('request', ({request, response}) => {
-			backendAssertions(request, response);
+	test('proxies a request with path', () => {
+		const backendData = {
+			hello: 'world'
+		};
+		const scope = nock(backend).get('/hello/world')
+			.reply(200, backendData, {'Content-Type': 'application/x+json'});
 
-			backendEvents.emit('response', backendResponse);
-		});
+		return request.get('/usePathOn/hello/world')
+			.then(response => {
+				scope.done();
 
-		return new Promise((resolve, reject) => {
-			http.get(url, response => {
-				let rawData = '';
-				response.on('data', chunk => {
-					rawData += chunk;
-				});
-				response.on('end', () => {
-					try {
-						const parsedData = JSON.parse(rawData);
-						clientAssertions(response, parsedData);
-						resolve();
-					} catch (error) {
-						reject(error);
-					}
-				});
+				expect(response.status).toBe(200);
+				expect(response.body).toEqual(backendData);
 			});
-		});
-	}
-
-	test('proxies a request with path', async () => {
-		const backendData = {hello: 'world!'};
-		const backendAssertions = (request, _) => {
-			expect(request.url).toEqual('/hello/world');
-		};
-		const clientAssertions = (response, parsedData) => {
-			expect(response.statusCode).toEqual(200);
-			expect(parsedData).toEqual(backendData);
-		};
-
-		return testApp('http://127.0.0.1:9011/usePathOn/hello/world', backendData, backendAssertions, clientAssertions);
 	});
 
-	test('proxies a request without a path', async () => {
-		const backendData = {hello: 'world 2!'};
-		const backendAssertions = (request, _) => {
-			expect(request.url).toEqual('/');
+	test('proxies a request without a path', () => {
+		const backendData = {
+			hello: 'world 2'
 		};
-		const clientAssertions = (response, parsedData) => {
-			expect(response.statusCode).toEqual(200);
-			expect(parsedData).toEqual(backendData);
-		};
+		const scope = nock(backend).get('/')
+			.reply(200, backendData, {'Content-Type': 'application/x+json'});
 
-		return testApp('http://127.0.0.1:9011/usePathOff/hello/world', backendData, backendAssertions, clientAssertions);
+		return request.get('/usePathOff/hello/world')
+			.then(response => {
+				scope.done();
+
+				expect(response.status).toBe(200);
+				expect(response.body).toEqual(backendData);
+			});
+	});
+
+	test('proxies a request with a changed host', () => {
+		const backendData = {
+			hello: 'world 3'
+		};
+		const scope = nock(backend, {
+			reqheaders: {
+				host: 'localhost:8081',
+				'X-Orig-Host': 'localhost'
+			}
+		}).get('/abc/123')
+			.reply(200, backendData, {'Content-Type': 'application/x+json'});
+
+		return request.get('/changeHostOn/abc/123')
+			.then(response => {
+				scope.done();
+
+				expect(response.status).toBe(200);
+				expect(response.body).toEqual(backendData);
+			});
 	});
 });
 
