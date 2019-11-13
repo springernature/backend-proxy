@@ -43,6 +43,7 @@ The following table describe the properties of the `options` object.
 | `backend` | Backend service to proxy requests to | string |  |
 | `requiredContentType` | Backend response content type thats required to allow interception and deserialization | string | `application/json` |
 | `usePath` | Should the incoming HTTP request's path be apended to the `backend` URL | boolean | `true` |
+| `changeHost` | Set the `host` header on the backend HTTP request to the backend host | boolean | `false` |
 | `key` | The property on the request object that the backend response will be stored under. | string | `backendResponse` |
 
 ### `renderBackendResponse(options)`
