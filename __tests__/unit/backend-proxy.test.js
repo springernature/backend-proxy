@@ -177,6 +177,34 @@ describe('Backend Proxy', () => {
 			expect(next).not.toHaveBeenCalled();
 		});
 
+		test('pipes a backend response to the client when there is no content type', () => {
+			// Given
+			const middleware = backendProxy(baseOptions);
+
+			const backendResponse = new EventEmitter();
+			backendResponse.headers = {
+				'dummy-header': 'dummy-value'
+			};
+			backendResponse.statusCode = 302;
+			backendResponse.pipe = jest.fn();
+
+			const response = {
+				header: jest.fn()
+			};
+
+			middleware(mockRequest, response, next);
+
+			// When
+			proxyRequest.emit('response', backendResponse);
+
+			// Then
+			expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
+			expect(backendResponse.pipe).toHaveBeenCalledWith(response);
+			expect(response.header).toHaveBeenCalledWith(backendResponse.headers);
+			expect(response.statusCode).toBe(backendResponse.statusCode);
+			expect(next).not.toHaveBeenCalled();
+		});
+
 		test('processes the backend response, storing it on the request object', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
@@ -206,13 +234,13 @@ describe('Backend Proxy', () => {
 			expect(next).toHaveBeenCalledTimes(1);
 		});
 
-		test('processes a utf-8 backend response, storing it on the request object', () => {
+		test('processes a utf-8 backend response (case insensitive), storing it on the request object', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
 
 			const backendResponse = new EventEmitter();
 			backendResponse.headers = {
-				'content-type': `${baseOptions.requiredContentType}; charset=utf-8`
+				'content-type': `${baseOptions.requiredContentType.toUpperCase()}; charset=utf-8`
 			};
 
 			const backendBody = {
