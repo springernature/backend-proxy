@@ -8,7 +8,8 @@ const keepAliveAgent = new http.Agent({keepAlive: true});
 const defaultOptions = {
 	key: 'backendResponse',
 	usePath: true,
-	requiredContentType: 'application/json'
+	requiredContentType: 'application/json',
+	changeHost: false
 };
 
 /**
@@ -22,12 +23,14 @@ const defaultOptions = {
  * @param {String} [options.requiredContentType=application/json] - The backend response content type to store for rendering, defaults to "application/json"
  * @param {boolean} [options.usePath=true] - Append the incoming HTTP request path to the backend URL
  * @param {String} [options.key=backendResponse] - The property name that the backend response is stored at
+ * @param {Boolean} [options.changeHost=false] - Should the request to the backend have its host field set to the backend url
  * @returns {Function} - An Express middleware
  */
 function backendProxy(options) {
 	options = {
 		...defaultOptions,
-		...options
+		...options,
+		requiredContentType: options.requiredContentType.toLowerCase()
 	};
 
 	const backendHttpOptions = new url.URL(options.backend);
@@ -49,14 +52,19 @@ function backendProxy(options) {
 			path: options.usePath ? basePath + request.url : backendHttpOptions.pathname
 		};
 
+		if (options.changeHost) {
+			request.headers.host = backendHttpOptions.host;
+			request.headers['X-Orig-Host'] = request.hostname;
+		}
+
 		// Pipe the incoming request through to the backend
 		const proxiedRequest = request.pipe(http.request(requestOptions));
 
 		proxiedRequest.on('response', backendResponse => {
-			const contentType = backendResponse.headers['content-type'];
+			const contentType = backendResponse.headers['content-type'].toLowerCase();
 
 			if (contentType === options.requiredContentType || contentType === `${options.requiredContentType}; charset=utf-8`) {
-				let stringBody = [];
+				const stringBody = [];
 				// Read the backend response off in chunks then deserialize it
 				backendResponse.on('data', chunk => stringBody.push(chunk));
 				backendResponse.on('end', () => {
