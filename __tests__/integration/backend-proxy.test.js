@@ -8,7 +8,7 @@ const backend = 'http://localhost:8081';
 
 app.use('/usePathOff', backendProxy({
 	usePath: false,
-	backend: backend,
+	backend,
 	requiredContentType: 'application/x+json'
 }));
 
