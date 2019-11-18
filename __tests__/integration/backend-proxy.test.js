@@ -14,12 +14,12 @@ app.use('/usePathOff', backendProxy({
 
 app.use('/usePathOn', backendProxy({
 	usePath: true,
-	backend: backend,
+	backend,
 	requiredContentType: 'application/x+json'
 }));
 
 app.use('/changeHostOn', backendProxy({
-	backend: backend,
+	backend,
 	usePath: true,
 	requiredContentType: 'application/x+json',
 	changeHost: true
