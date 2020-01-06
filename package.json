@@ -1,6 +1,6 @@
 {
   "name": "@springernature/backend-proxy",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Proxies frontend requests to a backend and can render the result",
   "main": "index.js",
   "scripts": {
@@ -47,8 +47,5 @@
   },
   "jest": {
     "testEnvironment": "node"
-  },
-  "publishConfig": {
-    "registry": "https://springernature.jfrog.io/springernature/api/npm/sigma-npm-local/"
   }
 }
