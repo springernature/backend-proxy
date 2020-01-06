@@ -138,4 +138,4 @@ Copyright © 2019 Springer Nature
 [license]: LICENSE.md
 [history]: HISTORY.md
 
-[support]: https://github.com/springernature/frontend/blob/master/practices/open-source-support.md
+[support]: https://github.com/springernature/frontend-playbook/blob/master/practices/open-source-support.md
