@@ -1,5 +1,10 @@
 # History
 
+## 1.1.1
+_06/01/20_
+
+- Whitelist NPM files ([joeyciechanowicz](https://github.com/joeyciechanowicz))
+
 ## 1.1.0
 _06/01/20_
 
