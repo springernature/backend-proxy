@@ -1,11 +1,16 @@
 # History
 
-## 1.1.1
+## 1.1.3
+_08/01/20_
+
+- Bump handlebars version to fix critical vulnrability ([joeyciechanowicz](https://github.com/joeyciechanowicz))
+
+## 1.1.2
 _06/01/20_
 
 - Whitelist NPM files ([joeyciechanowicz](https://github.com/joeyciechanowicz))
 
-## 1.1.0
+## 1.1.1
 _06/01/20_
 
 - Pipe backend headers and status to client ([joeyciechanowicz](https://github.com/joeyciechanowicz))
