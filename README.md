@@ -98,15 +98,16 @@ The following table describe the properties of the `options` object.
 
 #### File structure
 
-The `mockBackendResponse` middleware will match incoming requests to files that match `$PATH_$METHOD.json`. 
+The `mockBackendResponse` middleware will match incoming requests to files that match `$PATH_$METHOD.js` or  `$PATH_$METHOD.json`. If both a `.js` and `.json` file exist then the `.js` file will be used.  
 
 ```text
 .
-|___ _get.json  # Matches the root request of http://localhost:8080/
-|___ login_get.json # Matches an HTTP GET to http://localhost:8080/login
-|___ login_post.json # Matches an HTTP POST to http://localhost:8080/login
+|___ get.json  # Matches the root request of http://localhost:8080/
+|___ login-get.json # Matches an HTTP GET to http://localhost:8080/login
+|___ logout-get.js # Matches an HTTP GET to http://localhost:8080/logout
+|___ login-post.json # Matches an HTTP POST to http://localhost:8080/login
 |___ sub-directory
-  |____ other_get.json # Matches an HTTP GET to http://localhost:8080/sub-directory/other
+  |____ other-get.json # Matches an HTTP GET to http://localhost:8080/sub-directory/other
 ```
 
 ## Examples

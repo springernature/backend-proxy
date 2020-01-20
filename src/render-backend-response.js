@@ -11,7 +11,7 @@ const defaultOptions = {
  * @param {object} [options] - Configuration options
  * @param {string} options.key=backendResponse - The property name that the backend response is stored at
  * @param {string} options.templateKey=$config - The property on the backend response that contains the template named and layout
- * @returns {Function} - Middleware for an express application
+ * @returns {function} - Middleware for an express application
  */
 function renderBackendResponse(options) {
 	options = {

@@ -1,4 +1,4 @@
-const fs = require('fs');
+// const fs = require('fs');
 const path = require('path');
 
 const {MiddlewareError} = require('./middleware-error');
@@ -13,9 +13,9 @@ const defaultOptions = {
  * 	When found that will be stored on the express request.
  *
  * @param {object} options - Configuration options
- * @param {String} options.directory - Directory to serve files from
- * @param {String} [options.key=backendResponse] - The property name that the backend response is stored at
- * @returns {Function} - Express middleware
+ * @param {string} options.directory - Directory to serve files from
+ * @param {string} [options.key=backendResponse] - The property name that the backend response is stored at
+ * @returns {function} - Express middleware
  */
 function mockBackendResponse(options) {
 	if (process.env.NODE_ENV === 'production') {
@@ -28,30 +28,33 @@ function mockBackendResponse(options) {
 	};
 
 	return (request, response, next) => {
-		const baseFilename = path.join(options.directory, request.url);
 		const method = request.method.toLowerCase();
-		const filename = `${baseFilename}_${method}.json`;
 
 		// Only intercept GET & POST requests.
 		if (method !== 'get' && method !== 'post') {
 			return next();
 		}
 
-		fs.readFile(filename, (error, data) => {
-			if (error) {
+		// If the request was to '/', then we don't want the filename to have to be '-get.json', but rather 'get.json'
+		const separator = request.path.endsWith('/') ? '' : '-';
+		const filename = `${request.path}${separator}${method}`;
+		const fullFilename = path.join(options.directory, filename);
+
+		try {
+			// Resolve the filename to a full path. This throws an exception if no file (js or json) could be located
+			const resolvedFile = require.resolve(fullFilename);
+			// Clear the cache for that entry, so we don't get stale data
+			delete require.cache[resolvedFile];
+
+			request[options.key] = require(resolvedFile);
+			next();
+		} catch (error) {
+			if (error.code === 'MODULE_NOT_FOUND') {
+				// Swallow the error as it was caused by there being no file
 				return next();
 			}
-
-			try {
-				request[options.key] = JSON.parse(data.toString());
-				next();
-			} catch (error_) {
-				const parseError = new MiddlewareError(`Error de-serialising mock response using file ${filename}`);
-				parseError.original = error_;
-
-				next(parseError);
-			}
-		});
+			throw error;
+		}
 	};
 }
 
