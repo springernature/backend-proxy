@@ -5,9 +5,12 @@ const {mockBackendResponse} = require('@springernature/backend-proxy');
 
 const app = express();
 
-app.use(mockBackendResponse({
-	directory: path.resolve('./mocks')
-}));
+// Add our mock-backend when in dev mode
+if (process.env.NODE_ENV === 'development') {
+	app.use(mockBackendResponse({
+		directory: path.resolve('./mocks')
+	}));
+}
 
 app.use((request, response) => {
 	response.json(request.backendResponse);

@@ -1,9 +1,4 @@
 const path = require('path');
-const fs = require('fs');
-const {promisify} = require('util');
-
-const writeFile = promisify(fs.writeFile);
-const unlink = promisify(fs.unlink);
 
 const {mockBackendResponse} = require('../../src/mock-backend-response');
 
@@ -77,7 +72,6 @@ describe('Render Backend Response', () => {
 		middleware(request, undefined, next);
 
 		expect(next).toHaveBeenCalledWith();
-		expect(next.mock.calls[0].length).toEqual(0);
 		expect(request.testResponse).toEqual({
 			file
 		});
@@ -92,5 +86,6 @@ describe('Render Backend Response', () => {
 				path: 'runtime-error'
 			}, undefined, next);
 		}).toThrow('Unhandled error');
+		expect(next).toHaveBeenCalledTimes(0);
 	});
 });

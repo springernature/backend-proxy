@@ -1,7 +1,4 @@
-// const fs = require('fs');
 const path = require('path');
-
-const {MiddlewareError} = require('./middleware-error');
 
 const defaultOptions = {
 	key: 'backendResponse'

@@ -33,4 +33,4 @@ notifications:
 
 # Build script
 script:
-  - 'npm run build'
+  - 'npm test'
