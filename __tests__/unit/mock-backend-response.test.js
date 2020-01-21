@@ -1,15 +1,19 @@
-jest.mock('fs');
+const path = require('path');
 
 const {mockBackendResponse} = require('../../src/mock-backend-response');
 
 describe('Render Backend Response', () => {
+	const directory = path.resolve(__dirname, 'mock-files');
+
 	const options = {
 		key: 'testResponse',
-		directory: 'mocks/directory'
+		directory: directory
 	};
+	let next;
 
 	beforeEach(() => {
 		process.env.NODE_ENV = 'test';
+		next = jest.fn();
 	});
 
 	test('returns a middleware function', () => {
@@ -26,76 +30,62 @@ describe('Render Backend Response', () => {
 
 	test('calls next if request is not GET or POST', () => {
 		const middleware = mockBackendResponse(options);
-		const next = jest.fn();
 
 		middleware({
 			method: 'head',
-			url: '/a/url'
+			path: '/a/url'
 		}, undefined, next);
 
 		expect(next).toHaveBeenCalledWith();
+		expect(next.mock.calls[0].length).toEqual(0);
 	});
 
-	test('opens a mock file', () => {
-		const {readFile} = require('fs');
+	test('calls next if request does not match any mock files', () => {
 		const middleware = mockBackendResponse(options);
-		const request = {
+
+		middleware({
 			method: 'get',
-			url: '/a/url'
-		};
-
-		middleware(request);
-
-		expect(readFile).toHaveBeenCalledWith(`${options.directory}${request.url}_get.json`, expect.any(Function));
-	});
-
-	test('calls next if there was an error opening the file', () => {
-		const {__getReadFileCallback} = require('fs');
-		const middleware = mockBackendResponse(options);
-		const request = {
-			method: 'get',
-			url: '/a/url'
-		};
-		const next = jest.fn();
-		middleware(request, undefined, next);
-
-		__getReadFileCallback()({error: 'not found'});
+			path: '/does/not/exist'
+		}, undefined, next);
 
 		expect(next).toHaveBeenCalledWith();
+		expect(next.mock.calls[0].length).toEqual(0);
 	});
 
-	test('deserialises the file and stores it on the request', () => {
-		const {__getReadFileCallback} = require('fs');
+	test.each([
+		['get', '/', 'get.json'],
+		['post', '/', 'post.json'],
+		['get', '/js', 'js-get.js'],
+		['get', 'js', 'js-get.js'],
+		['get', 'duplicate', 'duplicate-get.js'],
+		['get', 'sub-directory', 'sub-directory-get.json'],
+		['get', 'sub-directory/', 'sub-directory/get.js'],
+		['get', '/sub-directory/', 'sub-directory/get.js'],
+		['get', 'sub-directory/file', 'sub-directory/file-get.json']
+	])('mocks HTTP %s "%s" with file %s', (httpMethod, path, file) => {
 		const middleware = mockBackendResponse(options);
 		const request = {
-			method: 'get',
-			url: '/a/url'
+			method: httpMethod,
+			path
 		};
-		const next = jest.fn();
-		const fileContents = {field1: 'value1'};
+
 		middleware(request, undefined, next);
 
-		__getReadFileCallback()(undefined, JSON.stringify(fileContents));
-
-		expect(request[options.key]).toEqual(fileContents);
 		expect(next).toHaveBeenCalledWith();
+		expect(request.testResponse).toEqual({
+			file
+		});
 	});
 
-	test('calls next with an error if the file cant be parsed', () => {
-		const {__getReadFileCallback} = require('fs');
+	test('surfaces the error if the included file causes a runtime exception', () => {
 		const middleware = mockBackendResponse(options);
-		const request = {
-			method: 'get',
-			url: '/a/url'
-		};
-		const next = jest.fn();
-		middleware(request, undefined, next);
 
-		__getReadFileCallback()(undefined, 'not -\'{123; json');
-
-		expect(next).toHaveBeenCalledWith(expect.objectContaining({
-			statusCode: 500,
-			message: expect.stringContaining('Error de-serialising mock response')
-		}));
+		expect(() => {
+			middleware({
+				method: 'get',
+				path: 'runtime-error'
+			}, undefined, next);
+		}).toThrow('Unhandled error');
+		expect(next).toHaveBeenCalledTimes(0);
 	});
 });

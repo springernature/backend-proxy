@@ -1,27 +1,22 @@
-/*
-Example express app that proxies all incoming requests to a backend service and renders the result
- */
+const path = require('path');
 const express = require('express');
-const handlebars = require('express-handlebars');
 
-const {backendProxy, mockBackendResponse, renderBackendResponse} = require('@springernature/backend-proxy');
+const {mockBackendResponse} = require('@springernature/backend-proxy');
 
-const app = new express();
+const app = express();
 
-app.engine('handlebars', handlebars());
-app.set('view engine', 'handlebars');
-
+// Add our mock-backend when in dev mode
 if (process.env.NODE_ENV === 'development') {
-	console.log('Adding mocking');
 	app.use(mockBackendResponse({
-		directory: "./mocks"
+		directory: path.resolve('./mocks')
 	}));
 }
 
-app.use(backendProxy({backend: 'http://localhost:8080/api'}));
-app.use(renderBackendResponse());
+app.use((request, response) => {
+	response.json(request.backendResponse);
+});
 
-app.listen(8080, (error) => {
+app.listen(8080, error => {
 	if (error) {
 		console.error(error);
 		process.exit(1);

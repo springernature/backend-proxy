@@ -19,12 +19,12 @@ const defaultOptions = {
  * Any responses that do not match the content-type will be passed back to the client.
  *
  * @param {object} options - Configuration options
- * @param {String} options.backend - URL of the backend to proxy requests to
- * @param {String} [options.requiredContentType=application/json] - The backend response content type to store for rendering, defaults to "application/json"
+ * @param {string} options.backend - URL of the backend to proxy requests to
+ * @param {string} [options.requiredContentType=application/json] - The backend response content type to store for rendering, defaults to "application/json"
  * @param {boolean} [options.usePath=true] - Append the incoming HTTP request path to the backend URL
- * @param {String} [options.key=backendResponse] - The property name that the backend response is stored at
- * @param {Boolean} [options.changeHost=false] - Should the request to the backend have its host field set to the backend url
- * @returns {Function} - An Express middleware
+ * @param {string} [options.key=backendResponse] - The property name that the backend response is stored at
+ * @param {boolean} [options.changeHost=false] - Should the request to the backend have its host field set to the backend url
+ * @returns {function} - An Express middleware
  */
 function backendProxy(options) {
 	options = {

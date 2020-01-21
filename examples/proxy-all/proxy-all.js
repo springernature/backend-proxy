@@ -6,20 +6,20 @@ const handlebars = require('express-handlebars');
 
 const {backendProxy, renderBackendResponse} = require('@springernature/backend-proxy');
 
-const app = new express();
+const app = express();
 
 // We cheat for this example and host the backend within the app itself
 const api = new express.Router();
-api.get('/', (req, res) => {
-	res.json({
+api.get('/', (request, response) => {
+	response.json({
 		$config: {
 			template: 'home'
 		},
 		time: new Date()
 	});
 });
-api.get('/other', (req, res) => {
-	res.json({
+api.get('/other', (request, response) => {
+	response.json({
 		$config: {
 			template: 'other'
 		},
@@ -37,7 +37,7 @@ app.use(backendProxy({
 
 app.use(renderBackendResponse());
 
-app.listen(8080, (error) => {
+app.listen(8080, error => {
 	if (error) {
 		console.error(error);
 		process.exit(1);
