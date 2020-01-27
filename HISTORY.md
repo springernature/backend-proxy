@@ -1,5 +1,10 @@
 # History
 
+## 1.2.0
+_27/01/20_
+
+- Adds support for using JS files as a mock ([joeyciechanowicz](https://github.com/joeyciechanowicz) & [morgaan](https://github.com/morgaan))
+
 ## 1.1.3
 _08/01/20_
 
