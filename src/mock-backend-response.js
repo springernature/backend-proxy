@@ -43,7 +43,14 @@ function mockBackendResponse(options) {
 			// Clear the cache for that entry, so we don't get stale data
 			delete require.cache[resolvedFile];
 
-			request[options.key] = require(resolvedFile);
+			const mockResponse = require(resolvedFile);
+
+			if (typeof mockResponse === 'function') {
+				request[options.key] = mockResponse(request);
+			} else {
+				request[options.key] = mockResponse;
+			}
+
 			next();
 		} catch (error) {
 			if (error.code === 'MODULE_NOT_FOUND') {

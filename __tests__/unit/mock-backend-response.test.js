@@ -77,6 +77,24 @@ describe('Render Backend Response', () => {
 		});
 	});
 
+	test('executes the exported function from a JS mock', () => {
+		const middleware = mockBackendResponse(options);
+		const request = {
+			method: 'get',
+			path: 'echo',
+			specialParam: 1
+		};
+
+		middleware(request, undefined, next);
+
+		expect(next).toHaveBeenCalledWith();
+		expect(request.testResponse).toEqual(request);
+
+		// We have to import echo-get here as the mock middleware will clear the cache before requiring any files
+		const echoGet = require('./mock-files/echo-get');
+		expect(echoGet).toHaveBeenCalledTimes(1);
+	});
+
 	test('surfaces the error if the included file causes a runtime exception', () => {
 		const middleware = mockBackendResponse(options);
 
