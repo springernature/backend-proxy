@@ -1,5 +1,10 @@
 # History
 
+## 1.3.0
+_02/02/20_
+
+- Adds support for using JS mocks that use a function that accepts the `express` request object ([joeyciechanowicz](https://github.com/joeyciechanowicz))
+
 ## 1.2.0
 _27/01/20_
 
@@ -8,7 +13,7 @@ _27/01/20_
 ## 1.1.3
 _08/01/20_
 
-- Bump handlebars version to fix critical vulnrability ([joeyciechanowicz](https://github.com/joeyciechanowicz))
+- Bump handlebars version to fix critical vulnerability ([joeyciechanowicz](https://github.com/joeyciechanowicz))
 
 ## 1.1.2
 _06/01/20_
