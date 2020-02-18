@@ -4,7 +4,12 @@ const express = require('express');
 const {backendProxy} = require('../../src/backend-proxy');
 
 const app = express();
-const backend = 'http://localhost:8081';
+const backend = 'http://backend-server:8081';
+
+// Disable all network connections, causing an error if any are made that aren't mocked
+nock.disableNetConnect();
+// supertest runs the app on 127.0.0.1:randomPort, so need to allow connections there
+nock.enableNetConnect('127.0.0.1');
 
 app.use('/usePathOff', backendProxy({
 	usePath: false,
@@ -76,8 +81,11 @@ describe('Backend proxy integration', () => {
 		};
 		const scope = nock(backend, {
 			reqheaders: {
-				host: 'localhost:8081',
-				'X-Orig-Host': 'localhost'
+				host: 'backend-server:8081',
+				'X-Orig-Host': headerValue => {
+					// supertest runs the app on a random port >= 50000
+					return headerValue.startsWith('127.0.0.1:');
+				}
 			}
 		}).get('/abc/123')
 			.reply(200, backendData, {'Content-Type': 'application/x+json'});

@@ -114,7 +114,9 @@ describe('Backend Proxy', () => {
 			backend: 'http://backend.local/sub/path',
 			changeHost: true
 		});
-		mockRequest.hostname = 'original.host:8080';
+		mockRequest.headers = {
+			host: 'original.host:8080'
+		};
 
 		// When
 		middleware(mockRequest, undefined, next);
@@ -127,7 +129,7 @@ describe('Backend Proxy', () => {
 			headers: {
 				...mockRequest.headers,
 				host: 'backend.local',
-				'X-Orig-Host': mockRequest.hostname
+				'X-Orig-Host': 'original.host:8080'
 			}
 		}));
 		// We haven't simulated an error or a response so next should not have been called at this point
