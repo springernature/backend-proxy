@@ -79,6 +79,14 @@ function backendProxy(options) {
 			} else {
 				// Pipe it back to the client as is
 				response.statusCode = backendResponse.statusCode;
+
+				if (backendResponse.statusCode >= 300 && backendResponse.statusCode <= 399 &&
+					backendResponse.headers.location &&
+					backendResponse.headers.location.startsWith(options.backend)) {
+					let url = new URL(backendResponse.headers.location);
+					backendResponse.headers.location = url.pathname + url.search + url.hash;
+				}
+
 				response.header(backendResponse.headers);
 				backendResponse.pipe(response);
 			}

@@ -282,5 +282,39 @@ describe('Backend Proxy', () => {
 				message: expect.stringContaining('Unexpected token')
 			}));
 		});
+
+		test('reads the backend response and makes the location a relative URL if the domain is the backend', () => {
+			// Given
+			const middleware = backendProxy(baseOptions);
+
+			let relativeLocation = `/some-wonderful/location`;
+
+			const backendResponse = new EventEmitter();
+			backendResponse.headers = {
+				location: baseOptions.backend + relativeLocation
+			};
+
+			backendResponse.statusCode = 302;
+			backendResponse.pipe = jest.fn();
+
+			const response = {
+				header: jest.fn()
+			};
+
+			middleware(mockRequest, response, next);
+
+			// When
+			proxyRequest.emit('response', backendResponse);
+
+			// Then
+			expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
+			expect(backendResponse.pipe).toHaveBeenCalledWith(response);
+			expect(response.header).toHaveBeenCalledWith({
+				...backendResponse.headers,
+				location: relativeLocation
+			});
+			expect(response.statusCode).toBe(backendResponse.statusCode);
+			expect(next).not.toHaveBeenCalled();
+		});
 	});
 });
