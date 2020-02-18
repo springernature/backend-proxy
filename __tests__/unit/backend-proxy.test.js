@@ -283,7 +283,7 @@ describe('Backend Proxy', () => {
 			}));
 		});
 
-		test('reads the backend response and makes the location a relative URL if the domain is the backend', () => {
+		test('forwards a 30x backend response with a rewritten location if the location header is to the backend server', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
 			let relativeLocation = `/some-wonderful/location?here=there#my-id`;
@@ -316,7 +316,7 @@ describe('Backend Proxy', () => {
 			expect(next).not.toHaveBeenCalled();
 		});
 
-		test(`reads the backend response and doesn't add a location is one isn't present`, () => {
+		test(`forwards a 30x backend response without change if there is no location header`, () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
 
@@ -345,7 +345,7 @@ describe('Backend Proxy', () => {
 			expect(next).not.toHaveBeenCalled();
 		});
 
-		test(`reads the backend response and doesn't alter the location if the domain isn't the backend`, () => {
+		test(`forwards a 30x redirect with no changes to the location header`, () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
 			let location = `http://not.the-back.end/some-wonderful/location?here=there#my-id`;
