@@ -287,7 +287,7 @@ describe('Backend Proxy', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
 
-			let relativeLocation = `/some-wonderful/location`;
+			let relativeLocation = `/some-wonderful/location?here=there#my-id`;
 
 			const backendResponse = new EventEmitter();
 			backendResponse.headers = {
