@@ -11,7 +11,7 @@
     "pretest": "npm run lint",
     "lint": "eslint src __tests__",
     "test": "jest --coverage",
-    "test:watch": "jest --watch --testPathIgnorePatterns integration"
+    "test:watch": "jest --watch"
   },
   "engines": {
     "node": ">= 8.3.0"

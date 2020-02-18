@@ -53,8 +53,8 @@ function backendProxy(options) {
 		};
 
 		if (options.changeHost) {
+			request.headers['X-Orig-Host'] = request.headers.host;
 			request.headers.host = backendHttpOptions.host;
-			request.headers['X-Orig-Host'] = request.hostname;
 		}
 
 		// Pipe the incoming request through to the backend
