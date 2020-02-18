@@ -1,5 +1,11 @@
 # History
 
+## 1.3.1
+_18/02/20_
+
+- Specifies the host header in the correct order. ([joeyciechanowicz](https://github.com/joeyciechanowicz))
+- Removes backend domain from location on a 30x response ([springerBuck](https://github.com/springerBuck))
+
 ## 1.3.0
 _02/02/20_
 
