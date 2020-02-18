@@ -100,7 +100,7 @@ describe('Backend proxy integration', () => {
 			.then(response => {
 				scope.done();
 
-				expect(response.status).toBe(301);
+				expect(response.status).toBe(307);
 				expect(response.headers.location).toEqual(location);
 			});
 	});
