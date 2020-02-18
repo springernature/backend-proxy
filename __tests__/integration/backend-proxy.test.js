@@ -94,7 +94,7 @@ describe('Backend proxy integration', () => {
 	test('proxies a request to redirect', () => {
 		const location = 'http://not.the-back.end/my-nice/location?here=there#my-id';
 		const scope = nock(backend).get('/hello/world')
-			.reply(301, {}, {location});
+			.reply(307, {}, {location});
 
 		return request.get('/usePathOn/hello/world')
 			.then(response => {
