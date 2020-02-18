@@ -283,7 +283,7 @@ describe('Backend Proxy', () => {
 			}));
 		});
 
-		test('reads the backend response and makes the location a relative URL if the domain is the backend', () => {
+		test('forwards a 30x backend response with a rewritten location if the location header is to the backend server', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
 			let relativeLocation = `/some-wonderful/location?here=there#my-id`;
