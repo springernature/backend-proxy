@@ -83,8 +83,8 @@ function backendProxy(options) {
 				if (backendResponse.statusCode >= 300 && backendResponse.statusCode <= 399 &&
 					backendResponse.headers.location &&
 					backendResponse.headers.location.startsWith(options.backend)) {
-					let url = new URL(backendResponse.headers.location);
-					backendResponse.headers.location = url.pathname + url.search + url.hash;
+					let locationUrl = new url.URL(backendResponse.headers.location);
+					backendResponse.headers.location = locationUrl.pathname + locationUrl.search + locationUrl.hash;
 				}
 
 				response.header(backendResponse.headers);
