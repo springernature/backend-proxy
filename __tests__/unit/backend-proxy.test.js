@@ -345,7 +345,7 @@ describe('Backend Proxy', () => {
 			expect(next).not.toHaveBeenCalled();
 		});
 
-		test(`reads the backend response and doesn't alter the location if the domain isn't the backend`, () => {
+		test(`forwards a 30x redirect with no changes to the location header`, () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
 			let location = `http://not.the-back.end/some-wonderful/location?here=there#my-id`;
