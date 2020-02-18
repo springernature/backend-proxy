@@ -90,5 +90,33 @@ describe('Backend proxy integration', () => {
 				expect(response.body).toEqual(backendData);
 			});
 	});
+
+	test('proxies a request to redirect', () => {
+		const location = 'http://not.the-back.end/my-nice/location?here=there#my-id';
+		const scope = nock(backend).get('/hello/world')
+			.reply(307, {}, {location});
+
+		return request.get('/usePathOn/hello/world')
+			.then(response => {
+				scope.done();
+
+				expect(response.status).toBe(307);
+				expect(response.headers.location).toEqual(location);
+			});
+	});
+
+	test('proxies a request to redirect and removes backend from the header', () => {
+		const relativePath = `/my-nice/location?here=there#my-id`;
+		const scope = nock(backend).get('/hello/world')
+			.reply(301, {}, {location: `${backend}${relativePath}`});
+
+		return request.get('/usePathOn/hello/world')
+			.then(response => {
+				scope.done();
+
+				expect(response.status).toBe(301);
+				expect(response.headers.location).toEqual(relativePath);
+			});
+	});
 });
 

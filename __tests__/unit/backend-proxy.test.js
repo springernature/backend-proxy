@@ -282,5 +282,130 @@ describe('Backend Proxy', () => {
 				message: expect.stringContaining('Unexpected token')
 			}));
 		});
+
+		test('forwards a 399 backend response with a rewritten location if the location header is to the backend server', () => {
+			// Given
+			const middleware = backendProxy(baseOptions);
+			let relativeLocation = `/some-wonderful/location?here=there#my-id`;
+
+			const backendResponse = new EventEmitter();
+			backendResponse.headers = {
+				location: baseOptions.backend + relativeLocation
+			};
+
+			backendResponse.statusCode = 399;
+			backendResponse.pipe = jest.fn();
+
+			const response = {
+				header: jest.fn()
+			};
+
+			middleware(mockRequest, response, next);
+
+			// When
+			proxyRequest.emit('response', backendResponse);
+
+			// Then
+			expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
+			expect(backendResponse.pipe).toHaveBeenCalledWith(response);
+			expect(response.header).toHaveBeenCalledWith({
+				...backendResponse.headers,
+				location: relativeLocation
+			});
+			expect(response.statusCode).toBe(backendResponse.statusCode);
+			expect(next).not.toHaveBeenCalled();
+		});
+
+		test('forwards a 300 backend response with a rewritten location if the location header is to the backend server', () => {
+			// Given
+			const middleware = backendProxy(baseOptions);
+			let relativeLocation = `/some-wonderful/location?here=there#my-id`;
+
+			const backendResponse = new EventEmitter();
+			backendResponse.headers = {
+				location: baseOptions.backend + relativeLocation
+			};
+
+			backendResponse.statusCode = 300;
+			backendResponse.pipe = jest.fn();
+
+			const response = {
+				header: jest.fn()
+			};
+
+			middleware(mockRequest, response, next);
+
+			// When
+			proxyRequest.emit('response', backendResponse);
+
+			// Then
+			expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
+			expect(backendResponse.pipe).toHaveBeenCalledWith(response);
+			expect(response.header).toHaveBeenCalledWith({
+				...backendResponse.headers,
+				location: relativeLocation
+			});
+			expect(response.statusCode).toBe(backendResponse.statusCode);
+			expect(next).not.toHaveBeenCalled();
+		});
+
+		test(`forwards a 30x backend response without change if there is no location header`, () => {
+			// Given
+			const middleware = backendProxy(baseOptions);
+
+			const backendResponse = new EventEmitter();
+			backendResponse.headers = {
+				'content-type': 'text/plain'
+			};
+
+			backendResponse.statusCode = 302;
+			backendResponse.pipe = jest.fn();
+
+			const response = {
+				header: jest.fn()
+			};
+
+			middleware(mockRequest, response, next);
+
+			// When
+			proxyRequest.emit('response', backendResponse);
+
+			// Then
+			expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
+			expect(backendResponse.pipe).toHaveBeenCalledWith(response);
+			expect(response.header).toHaveBeenCalledWith(backendResponse.headers);
+			expect(response.statusCode).toBe(backendResponse.statusCode);
+			expect(next).not.toHaveBeenCalled();
+		});
+
+		test(`forwards a 30x redirect with no changes to the location header`, () => {
+			// Given
+			const middleware = backendProxy(baseOptions);
+			let location = `http://not.the-back.end/some-wonderful/location?here=there#my-id`;
+
+			const backendResponse = new EventEmitter();
+			backendResponse.headers = {
+				location
+			};
+
+			backendResponse.statusCode = 302;
+			backendResponse.pipe = jest.fn();
+
+			const response = {
+				header: jest.fn()
+			};
+
+			middleware(mockRequest, response, next);
+
+			// When
+			proxyRequest.emit('response', backendResponse);
+
+			// Then
+			expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
+			expect(backendResponse.pipe).toHaveBeenCalledWith(response);
+			expect(response.header).toHaveBeenCalledWith(backendResponse.headers);
+			expect(response.statusCode).toBe(backendResponse.statusCode);
+			expect(next).not.toHaveBeenCalled();
+		});
 	});
 });
