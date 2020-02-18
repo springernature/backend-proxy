@@ -286,7 +286,6 @@ describe('Backend Proxy', () => {
 		test('reads the backend response and makes the location a relative URL if the domain is the backend', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
-
 			let relativeLocation = `/some-wonderful/location?here=there#my-id`;
 
 			const backendResponse = new EventEmitter();
@@ -317,10 +316,38 @@ describe('Backend Proxy', () => {
 			expect(next).not.toHaveBeenCalled();
 		});
 
-		test('reads the backend response and doesn\'t alter the location if the domain isn\'t the backend', () => {
+		test(`reads the backend response and doesn't add a location is one isn't present`, () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
 
+			const backendResponse = new EventEmitter();
+			backendResponse.headers = {
+				'content-type': 'text/plain'
+			};
+
+			backendResponse.statusCode = 302;
+			backendResponse.pipe = jest.fn();
+
+			const response = {
+				header: jest.fn()
+			};
+
+			middleware(mockRequest, response, next);
+
+			// When
+			proxyRequest.emit('response', backendResponse);
+
+			// Then
+			expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
+			expect(backendResponse.pipe).toHaveBeenCalledWith(response);
+			expect(response.header).toHaveBeenCalledWith(backendResponse.headers);
+			expect(response.statusCode).toBe(backendResponse.statusCode);
+			expect(next).not.toHaveBeenCalled();
+		});
+
+		test(`reads the backend response and doesn't alter the location if the domain isn't the backend`, () => {
+			// Given
+			const middleware = backendProxy(baseOptions);
 			let location = `http://not.the-back.end/some-wonderful/location?here=there#my-id`;
 
 			const backendResponse = new EventEmitter();
@@ -343,10 +370,7 @@ describe('Backend Proxy', () => {
 			// Then
 			expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
 			expect(backendResponse.pipe).toHaveBeenCalledWith(response);
-			expect(response.header).toHaveBeenCalledWith({
-				...backendResponse.headers,
-				location
-			});
+			expect(response.header).toHaveBeenCalledWith(backendResponse.headers);
 			expect(response.statusCode).toBe(backendResponse.statusCode);
 			expect(next).not.toHaveBeenCalled();
 		});
