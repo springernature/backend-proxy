@@ -316,7 +316,7 @@ describe('Backend Proxy', () => {
 			expect(next).not.toHaveBeenCalled();
 		});
 
-		test(`reads the backend response and doesn't add a location is one isn't present`, () => {
+		test(`forwards a 30x backend response without change if there is no location header`, () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
 
