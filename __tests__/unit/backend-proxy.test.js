@@ -381,7 +381,6 @@ describe('Backend Proxy', () => {
 				backendResponse.headers = {
 					location: baseOptions.backend + relativeLocation
 				};
-				backendResponse.statusCode = 302;
 
 				middleware(mockRequest, response, next);
 
