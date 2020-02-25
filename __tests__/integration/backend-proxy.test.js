@@ -99,7 +99,6 @@ describe('Backend proxy integration', () => {
 			});
 	});
 
-
 	test('proxies a request with a changed host if the domain matches the backend domain, but not the backend path', () => {
 		const relativePath = `/my-nice/location?here=there#my-id`;
 		const scope = nock(backend).get('/hello/world')

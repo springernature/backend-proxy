@@ -81,7 +81,7 @@ function backendProxy(options) {
 				response.statusCode = backendResponse.statusCode;
 
 				if (backendResponse.statusCode >= 300 && backendResponse.statusCode <= 399 && backendResponse.headers.location) {
-					if (backendResponse.headers.location.indexOf(backendHttpOptions.host) !== -1) {
+					if (backendResponse.headers.location.includes(backendHttpOptions.host)) {
 						const locationUrl = new url.URL(backendResponse.headers.location);
 						backendResponse.headers.location = locationUrl.pathname + locationUrl.search + locationUrl.hash;
 					}
