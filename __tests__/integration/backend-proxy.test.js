@@ -99,6 +99,20 @@ describe('Backend proxy integration', () => {
 			});
 	});
 
+	test('proxies a request with a changed host if the domain matches the backend domain, but not the backend path', () => {
+		const relativePath = `/my-nice/location?here=there#my-id`;
+		const scope = nock(backend).get('/hello/world')
+			.reply(302, {}, {location: `${backend}/an-extra/path/${relativePath}`});
+
+		return request.get('/usePathOn/hello/world')
+			.then(response => {
+				scope.done();
+
+				expect(response.status).toBe(302);
+				expect(response.headers.location).toEqual(`/an-extra/path/${relativePath}`);
+			});
+	});
+
 	test('proxies a request to redirect', () => {
 		const location = 'http://not.the-back.end/my-nice/location?here=there#my-id';
 		const scope = nock(backend).get('/hello/world')
