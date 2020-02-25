@@ -304,7 +304,7 @@ describe('Backend Proxy', () => {
 
 			test('forwards a 399 backend response with a rewritten location if the location header is to the backend server', () => {
 				// Given
-				let relativeLocation = `/some-wonderful/location?here=there#my-id`;
+				const relativeLocation = `/some-wonderful/location?here=there#my-id`;
 
 				backendResponse.headers = {
 					location: baseOptions.backend + relativeLocation
@@ -329,7 +329,7 @@ describe('Backend Proxy', () => {
 
 			test('forwards a 300 backend response with a rewritten location if the location header is to the backend server', () => {
 				// Given
-				let relativeLocation = `/some-wonderful/location?here=there#my-id`;
+				const relativeLocation = `/some-wonderful/location?here=there#my-id`;
 				backendResponse.headers = {
 					location: baseOptions.backend + relativeLocation
 				};
@@ -377,7 +377,7 @@ describe('Backend Proxy', () => {
 					backend: baseOptions.backend + '/additional/path'
 				});
 
-				let relativeLocation = `/some-wonderful/location?here=there#my-id`;
+				const relativeLocation = `/some-wonderful/location?here=there#my-id`;
 				backendResponse.headers = {
 					location: baseOptions.backend + relativeLocation
 				};
