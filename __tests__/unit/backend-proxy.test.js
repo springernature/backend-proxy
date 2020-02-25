@@ -380,6 +380,42 @@ describe('Backend Proxy', () => {
 			expect(next).not.toHaveBeenCalled();
 		});
 
+		test('rewrites the location header if the domain matches the backend domain, but not the backend path', () => {
+			// Given
+			const middleware = backendProxy({
+				...baseOptions,
+				backend: baseOptions.backend + '/additional/path'
+			});
+			let relativeLocation = `/some-wonderful/location?here=there#my-id`;
+
+			const backendResponse = new EventEmitter();
+			backendResponse.headers = {
+				location: baseOptions.backend + relativeLocation
+			};
+
+			backendResponse.statusCode = 302;
+			backendResponse.pipe = jest.fn();
+
+			const response = {
+				header: jest.fn()
+			};
+
+			middleware(mockRequest, response, next);
+
+			// When
+			proxyRequest.emit('response', backendResponse);
+
+			// Then
+			expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
+			expect(backendResponse.pipe).toHaveBeenCalledWith(response);
+			expect(response.header).toHaveBeenCalledWith({
+				...backendResponse.headers,
+				location: relativeLocation
+			});
+			expect(response.statusCode).toBe(backendResponse.statusCode);
+			expect(next).not.toHaveBeenCalled();
+		});
+
 		test(`forwards a 30x redirect with no changes to the location header`, () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
