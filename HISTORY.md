@@ -1,5 +1,10 @@
 # History
 
+## 1.3.2
+_26/02/20_
+
+- Fixes `location` header rewriting to only rewrite the host ([springerBuck](https://github.com/springerBuck))
+
 ## 1.3.1
 _18/02/20_
 
