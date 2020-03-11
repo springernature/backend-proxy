@@ -43,7 +43,7 @@ app.use('*', (request, response) => {
 });
 
 app.use((error, request, response, _) => {
-	response.json(error);
+	response.send(`Error ${error.statusCode}`);
 });
 
 describe('Backend proxy integration', () => {
@@ -159,8 +159,8 @@ describe('Backend proxy integration', () => {
 			.then(response => {
 				scope.done();
 
-				expect(response.status).toBe(200);
-				expect(response.body).toEqual({statusCode: 401});
+				expect(response.status).toBe(401);
+				expect(response.text).toEqual(`Error 401`);
 			});
 	});
 });

@@ -78,14 +78,20 @@ function backendProxy(options) {
 						next(new MiddlewareError(error));
 					}
 				});
+				backendResponse.on('error', error => {
+					next(error);
+				});
 			} else {
-				if (options.interceptErrors && backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599) {
-					return next({statusCode: backendResponse.statusCode});
-				}
-
-				// Pipe it back to the client as is
+				// We don't have the correct content-type, usually this is because a backend responded with a redirect
+				// or an error
 				response.statusCode = backendResponse.statusCode;
 
+				// Should we intercept the error and raise it as an express error
+				if (options.interceptErrors && backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599) {
+					return next({statusCode: backendResponse.statusCode, backendResponse: backendResponse});
+				}
+
+				// If it's a redirect we need to rewrite the URL to be relative (to the frontend)
 				if (backendResponse.statusCode >= 300 && backendResponse.statusCode <= 399 && backendResponse.headers.location) {
 					if (backendResponse.headers.location.includes(backendHttpOptions.host)) {
 						const locationUrl = new url.URL(backendResponse.headers.location);
@@ -93,6 +99,7 @@ function backendProxy(options) {
 					}
 				}
 
+				// Proxy the headers and backend response to the client
 				response.header(backendResponse.headers);
 				backendResponse.pipe(response);
 			}

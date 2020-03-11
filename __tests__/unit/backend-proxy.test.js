@@ -274,6 +274,19 @@ describe('Backend Proxy', () => {
 			}));
 		});
 
+		test('catches an error reading the backend stream', () => {
+			// Given
+			const middleware = backendProxy(baseOptions);
+			middleware(mockRequest, undefined, next);
+			proxyRequest.emit('response', backendResponse);
+
+			// When
+			backendResponse.emit('error', new Error('stream error'));
+
+			// Then
+			expect(next).toHaveBeenCalledWith(new Error('stream error'));
+		});
+
 		describe('when interceptErrors is on', () => {
 			let middleware;
 
@@ -312,8 +325,12 @@ describe('Backend Proxy', () => {
 				// Then
 				expect(backendResponse.pipe).not.toHaveBeenCalled();
 				expect(response.header).not.toHaveBeenCalledWith();
+				expect(response.statusCode).toBe(statusCode);
 				expect(next).toHaveBeenCalledTimes(1);
-				expect(next).toHaveBeenCalledWith({statusCode: statusCode});
+				expect(next).toHaveBeenCalledWith({
+					statusCode: statusCode,
+					backendResponse: backendResponse
+				});
 			});
 		});
 
