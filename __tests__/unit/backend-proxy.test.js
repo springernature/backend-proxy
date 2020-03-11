@@ -149,23 +149,6 @@ describe('Backend Proxy', () => {
 		expect(next).not.toHaveBeenCalled();
 	});
 
-	describe('when interceptErrors is on', () => {
-		let middleware;
-
-		beforeEach(() => {
-			middleware = backendProxy({
-				...baseOptions,
-				interceptErrors: true
-			});
-
-			middleware(mockRequest, undefined, next);
-		});
-
-		test('does not intercept a 200', () => {
-
-		});
-	});
-
 	describe('backend response', () => {
 		test('passes an error on to next', () => {
 			// Given
@@ -188,8 +171,6 @@ describe('Backend Proxy', () => {
 				'content-type': 'not-the-right-one',
 				'dummy-header': 'dummy-value'
 			};
-
-
 
 			middleware(mockRequest, response, next);
 
@@ -279,7 +260,6 @@ describe('Backend Proxy', () => {
 			const middleware = backendProxy(baseOptions);
 			const parts = ['definitely', 'not', '{};; json'];
 
-
 			middleware(mockRequest, undefined, next);
 			proxyRequest.emit('response', backendResponse);
 
@@ -292,6 +272,49 @@ describe('Backend Proxy', () => {
 				statusCode: 500,
 				message: expect.stringContaining('Unexpected token')
 			}));
+		});
+
+		describe('when interceptErrors is on', () => {
+			let middleware;
+
+			beforeEach(() => {
+				middleware = backendProxy({
+					...baseOptions,
+					interceptErrors: true
+				});
+
+				middleware(mockRequest, response, next);
+
+				backendResponse.headers = {};
+			});
+
+			test('does not intercept a 200', () => {
+				// When
+				proxyRequest.emit('response', backendResponse);
+
+				// Then
+				expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
+				expect(backendResponse.pipe).toHaveBeenCalledWith(response);
+				expect(response.header).toHaveBeenCalledWith(backendResponse.headers);
+				expect(response.statusCode).toBe(backendResponse.statusCode);
+				expect(next).not.toHaveBeenCalled();
+			});
+
+			test.each(
+				[400, 404, 500, 599]
+			)('intercepts a %s request and raises it as an express error', statusCode => {
+				// Given
+				backendResponse.statusCode = statusCode;
+
+				// When
+				proxyRequest.emit('response', backendResponse);
+
+				// Then
+				expect(backendResponse.pipe).not.toHaveBeenCalled();
+				expect(response.header).not.toHaveBeenCalledWith();
+				expect(next).toHaveBeenCalledTimes(1);
+				expect(next).toHaveBeenCalledWith({statusCode: statusCode});
+			});
 		});
 
 		describe('redirect', () => {

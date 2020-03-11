@@ -9,7 +9,8 @@ const defaultOptions = {
 	key: 'backendResponse',
 	usePath: true,
 	requiredContentType: 'application/json',
-	changeHost: false
+	changeHost: false,
+	interceptErrors: false
 };
 
 /**
@@ -24,6 +25,7 @@ const defaultOptions = {
  * @param {boolean} [options.usePath=true] - Append the incoming HTTP request path to the backend URL
  * @param {string} [options.key=backendResponse] - The property name that the backend response is stored at
  * @param {boolean} [options.changeHost=false] - Should the request to the backend have its host field set to the backend url
+ * @param {boolean} [options.interceptErrors=false] - Should backend responses with HTTP 400 - 599 be intercepted and raised as express errors
  * @returns {function} - An Express middleware
  */
 function backendProxy(options) {
@@ -77,6 +79,10 @@ function backendProxy(options) {
 					}
 				});
 			} else {
+				if (options.interceptErrors && backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599) {
+					return next({statusCode: backendResponse.statusCode});
+				}
+
 				// Pipe it back to the client as is
 				response.statusCode = backendResponse.statusCode;
 
