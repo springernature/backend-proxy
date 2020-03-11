@@ -290,12 +290,18 @@ describe('Backend Proxy', () => {
 			let backendResponse;
 			let response;
 
+			const relativeLocation = `/some-wonderful/location?here=there#my-id`;
+
 			beforeEach(() => {
 				middleware = backendProxy(baseOptions);
 
 				backendResponse = new EventEmitter();
 				backendResponse.statusCode = 300;
 				backendResponse.pipe = jest.fn();
+				backendResponse.headers = {
+					location: baseOptions.backend + relativeLocation
+				};
+				backendResponse.statusCode = 302;
 
 				response = {
 					header: jest.fn()
@@ -304,13 +310,7 @@ describe('Backend Proxy', () => {
 
 			test('forwards a 399 backend response with a rewritten location if the location header is to the backend server', () => {
 				// Given
-				const relativeLocation = `/some-wonderful/location?here=there#my-id`;
-
-				backendResponse.headers = {
-					location: baseOptions.backend + relativeLocation
-				};
 				backendResponse.statusCode = 399;
-
 				middleware(mockRequest, response, next);
 
 				// When
@@ -329,11 +329,6 @@ describe('Backend Proxy', () => {
 
 			test('forwards a 300 backend response with a rewritten location if the location header is to the backend server', () => {
 				// Given
-				const relativeLocation = `/some-wonderful/location?here=there#my-id`;
-				backendResponse.headers = {
-					location: baseOptions.backend + relativeLocation
-				};
-
 				middleware(mockRequest, response, next);
 
 				// When
@@ -352,12 +347,12 @@ describe('Backend Proxy', () => {
 
 			test(`forwards a 30x backend response without change if there is no location header`, () => {
 				// Given
+				middleware(mockRequest, response, next);
+
+				// Given
 				backendResponse.headers = {
 					'content-type': 'text/plain'
 				};
-				backendResponse.statusCode = 302;
-
-				middleware(mockRequest, response, next);
 
 				// When
 				proxyRequest.emit('response', backendResponse);
@@ -372,15 +367,10 @@ describe('Backend Proxy', () => {
 
 			test('rewrites the location header if the domain matches the backend domain, but not the backend path', () => {
 				// Given
-				middleware = backendProxy({
+				const middleware = backendProxy({
 					...baseOptions,
 					backend: baseOptions.backend + '/additional/path'
 				});
-
-				const relativeLocation = `/some-wonderful/location?here=there#my-id`;
-				backendResponse.headers = {
-					location: baseOptions.backend + relativeLocation
-				};
 
 				middleware(mockRequest, response, next);
 
@@ -403,8 +393,6 @@ describe('Backend Proxy', () => {
 				backendResponse.headers = {
 					location: 'http://not.the-back.end/some-wonderful/location?here=there#my-id'
 				};
-				backendResponse.statusCode = 302;
-
 				middleware(mockRequest, response, next);
 
 				// When
