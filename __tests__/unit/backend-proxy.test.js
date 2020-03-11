@@ -1,7 +1,7 @@
 const EventEmitter = require('events');
+const {request} = require('http');
 
 jest.mock('http');
-const {request} = require('http');
 
 const {backendProxy} = require('../../src/backend-proxy');
 
@@ -16,6 +16,8 @@ describe('Backend Proxy', () => {
 	let mockRequest;
 	let next;
 	let proxyRequest;
+	let backendResponse;
+	let response;
 
 	beforeEach(() => {
 		proxyRequest = new EventEmitter();
@@ -31,6 +33,17 @@ describe('Backend Proxy', () => {
 		};
 
 		next = jest.fn();
+
+		backendResponse = new EventEmitter();
+		backendResponse.pipe = jest.fn();
+		backendResponse.headers = {
+			'content-type': baseOptions.requiredContentType
+		};
+		backendResponse.statusCode = 200;
+
+		response = {
+			header: jest.fn()
+		};
 	});
 
 	afterEach(() => {
@@ -154,16 +167,9 @@ describe('Backend Proxy', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
 
-			const backendResponse = new EventEmitter();
 			backendResponse.headers = {
 				'content-type': 'not-the-right-one',
 				'dummy-header': 'dummy-value'
-			};
-			backendResponse.statusCode = 302;
-			backendResponse.pipe = jest.fn();
-
-			const response = {
-				header: jest.fn()
 			};
 
 			middleware(mockRequest, response, next);
@@ -183,15 +189,8 @@ describe('Backend Proxy', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
 
-			const backendResponse = new EventEmitter();
 			backendResponse.headers = {
 				'dummy-header': 'dummy-value'
-			};
-			backendResponse.statusCode = 302;
-			backendResponse.pipe = jest.fn();
-
-			const response = {
-				header: jest.fn()
 			};
 
 			middleware(mockRequest, response, next);
@@ -210,11 +209,6 @@ describe('Backend Proxy', () => {
 		test('processes the backend response, storing it on the request object', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
-
-			const backendResponse = new EventEmitter();
-			backendResponse.headers = {
-				'content-type': baseOptions.requiredContentType
-			};
 
 			const backendBody = {
 				field1: 'value1',
@@ -240,7 +234,6 @@ describe('Backend Proxy', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
 
-			const backendResponse = new EventEmitter();
 			backendResponse.headers = {
 				'content-type': `${baseOptions.requiredContentType.toUpperCase()}; charset=utf-8`
 			};
@@ -266,10 +259,6 @@ describe('Backend Proxy', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
 			const parts = ['definitely', 'not', '{};; json'];
-			const backendResponse = new EventEmitter();
-			backendResponse.headers = {
-				'content-type': baseOptions.requiredContentType
-			};
 
 			middleware(mockRequest, undefined, next);
 			proxyRequest.emit('response', backendResponse);
@@ -285,32 +274,83 @@ describe('Backend Proxy', () => {
 			}));
 		});
 
+		test('catches an error reading the backend stream', () => {
+			// Given
+			const middleware = backendProxy(baseOptions);
+			middleware(mockRequest, undefined, next);
+			proxyRequest.emit('response', backendResponse);
+
+			// When
+			backendResponse.emit('error', new Error('stream error'));
+
+			// Then
+			expect(next).toHaveBeenCalledWith(new Error('stream error'));
+		});
+
+		describe('when interceptErrors is on', () => {
+			let middleware;
+
+			beforeEach(() => {
+				middleware = backendProxy({
+					...baseOptions,
+					interceptErrors: true
+				});
+
+				middleware(mockRequest, response, next);
+
+				backendResponse.headers = {};
+			});
+
+			test('does not intercept a 200', () => {
+				// When
+				proxyRequest.emit('response', backendResponse);
+
+				// Then
+				expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
+				expect(backendResponse.pipe).toHaveBeenCalledWith(response);
+				expect(response.header).toHaveBeenCalledWith(backendResponse.headers);
+				expect(response.statusCode).toBe(backendResponse.statusCode);
+				expect(next).not.toHaveBeenCalled();
+			});
+
+			test.each(
+				[400, 404, 500, 599]
+			)('intercepts a %s request and raises it as an express error', statusCode => {
+				// Given
+				backendResponse.statusCode = statusCode;
+
+				// When
+				proxyRequest.emit('response', backendResponse);
+
+				// Then
+				expect(backendResponse.pipe).not.toHaveBeenCalled();
+				expect(response.header).not.toHaveBeenCalledWith();
+				expect(response.statusCode).toBe(statusCode);
+				expect(next).toHaveBeenCalledTimes(1);
+				expect(next).toHaveBeenCalledWith({
+					statusCode: statusCode,
+					backendResponse: backendResponse
+				});
+			});
+		});
+
 		describe('redirect', () => {
 			let middleware;
-			let backendResponse;
-			let response;
+
+			const relativeLocation = `/some-wonderful/location?here=there#my-id`;
 
 			beforeEach(() => {
 				middleware = backendProxy(baseOptions);
 
-				backendResponse = new EventEmitter();
-				backendResponse.statusCode = 300;
-				backendResponse.pipe = jest.fn();
-
-				response = {
-					header: jest.fn()
+				backendResponse.headers = {
+					location: baseOptions.backend + relativeLocation
 				};
+				backendResponse.statusCode = 302;
 			});
 
 			test('forwards a 399 backend response with a rewritten location if the location header is to the backend server', () => {
 				// Given
-				const relativeLocation = `/some-wonderful/location?here=there#my-id`;
-
-				backendResponse.headers = {
-					location: baseOptions.backend + relativeLocation
-				};
 				backendResponse.statusCode = 399;
-
 				middleware(mockRequest, response, next);
 
 				// When
@@ -329,11 +369,6 @@ describe('Backend Proxy', () => {
 
 			test('forwards a 300 backend response with a rewritten location if the location header is to the backend server', () => {
 				// Given
-				const relativeLocation = `/some-wonderful/location?here=there#my-id`;
-				backendResponse.headers = {
-					location: baseOptions.backend + relativeLocation
-				};
-
 				middleware(mockRequest, response, next);
 
 				// When
@@ -352,12 +387,12 @@ describe('Backend Proxy', () => {
 
 			test(`forwards a 30x backend response without change if there is no location header`, () => {
 				// Given
+				middleware(mockRequest, response, next);
+
+				// Given
 				backendResponse.headers = {
 					'content-type': 'text/plain'
 				};
-				backendResponse.statusCode = 302;
-
-				middleware(mockRequest, response, next);
 
 				// When
 				proxyRequest.emit('response', backendResponse);
@@ -372,15 +407,10 @@ describe('Backend Proxy', () => {
 
 			test('rewrites the location header if the domain matches the backend domain, but not the backend path', () => {
 				// Given
-				middleware = backendProxy({
+				const middleware = backendProxy({
 					...baseOptions,
 					backend: baseOptions.backend + '/additional/path'
 				});
-
-				const relativeLocation = `/some-wonderful/location?here=there#my-id`;
-				backendResponse.headers = {
-					location: baseOptions.backend + relativeLocation
-				};
 
 				middleware(mockRequest, response, next);
 
@@ -403,8 +433,6 @@ describe('Backend Proxy', () => {
 				backendResponse.headers = {
 					location: 'http://not.the-back.end/some-wonderful/location?here=there#my-id'
 				};
-				backendResponse.statusCode = 302;
-
 				middleware(mockRequest, response, next);
 
 				// When

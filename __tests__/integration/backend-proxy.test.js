@@ -30,10 +30,20 @@ app.use('/changeHostOn', backendProxy({
 	changeHost: true
 }));
 
+app.get('/interceptOn', backendProxy({
+	backend,
+	requiredContentType: 'application/x+json',
+	interceptErrors: true
+}));
+
 // Always return the backendResponse field as json
 app.use('*', (request, response) => {
 	response.json(request.backendResponse);
 	response.end();
+});
+
+app.use((error, request, response, _) => {
+	response.send(`Error ${error.statusCode}`);
 });
 
 describe('Backend proxy integration', () => {
@@ -138,6 +148,19 @@ describe('Backend proxy integration', () => {
 
 				expect(response.status).toBe(301);
 				expect(response.headers.location).toEqual(relativePath);
+			});
+	});
+
+	test('intercepts an error from the backend', () => {
+		const scope = nock(backend).get('/interceptOn')
+			.reply(401, 'You are not authorised to view this content', {'content-type': 'text/plain'});
+
+		return request.get('/interceptOn')
+			.then(response => {
+				scope.done();
+
+				expect(response.status).toBe(401);
+				expect(response.text).toEqual(`Error 401`);
 			});
 	});
 });

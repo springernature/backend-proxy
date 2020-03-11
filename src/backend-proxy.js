@@ -9,7 +9,8 @@ const defaultOptions = {
 	key: 'backendResponse',
 	usePath: true,
 	requiredContentType: 'application/json',
-	changeHost: false
+	changeHost: false,
+	interceptErrors: false
 };
 
 /**
@@ -24,6 +25,7 @@ const defaultOptions = {
  * @param {boolean} [options.usePath=true] - Append the incoming HTTP request path to the backend URL
  * @param {string} [options.key=backendResponse] - The property name that the backend response is stored at
  * @param {boolean} [options.changeHost=false] - Should the request to the backend have its host field set to the backend url
+ * @param {boolean} [options.interceptErrors=false] - Should backend responses with HTTP 400 - 599 be intercepted and raised as express errors
  * @returns {function} - An Express middleware
  */
 function backendProxy(options) {
@@ -76,10 +78,20 @@ function backendProxy(options) {
 						next(new MiddlewareError(error));
 					}
 				});
+				backendResponse.on('error', error => {
+					next(error);
+				});
 			} else {
-				// Pipe it back to the client as is
+				// We don't have the correct content-type, usually this is because a backend responded with a redirect
+				// or an error
 				response.statusCode = backendResponse.statusCode;
 
+				// Should we intercept the error and raise it as an express error
+				if (options.interceptErrors && backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599) {
+					return next({statusCode: backendResponse.statusCode, backendResponse: backendResponse});
+				}
+
+				// If it's a redirect we need to rewrite the URL to be relative (to the frontend)
 				if (backendResponse.statusCode >= 300 && backendResponse.statusCode <= 399 && backendResponse.headers.location) {
 					if (backendResponse.headers.location.includes(backendHttpOptions.host)) {
 						const locationUrl = new url.URL(backendResponse.headers.location);
@@ -87,6 +99,7 @@ function backendProxy(options) {
 					}
 				}
 
+				// Proxy the headers and backend response to the client
 				response.header(backendResponse.headers);
 				backendResponse.pipe(response);
 			}
