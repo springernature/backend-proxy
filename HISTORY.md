@@ -1,5 +1,10 @@
 # History
 
+## 1.4.0
+_11/03/20_
+
+- `interceptErrors` option added. ([joeyciechanowicz](https://github.com/joeyciechanowicz))
+
 ## 1.3.2
 _26/02/20_
 
