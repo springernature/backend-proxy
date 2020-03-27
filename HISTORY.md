@@ -1,5 +1,10 @@
 # History
 
+## 1.4.1
+_27/03/20_
+
+- Handle stream aborted. ([joeyciechanowicz](https://github.com/joeyciechanowicz))
+
 ## 1.4.0
 _11/03/20_
 
