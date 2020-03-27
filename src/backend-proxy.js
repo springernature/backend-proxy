@@ -14,6 +14,8 @@ const defaultOptions = {
 };
 
 function tryReadData(options, backendResponse, request, next) {
+	let handled = false;
+
 	const stringBody = [];
 	// Read the backend response off in chunks then deserialize it
 	backendResponse.on('data', chunk => stringBody.push(chunk));
@@ -21,35 +23,24 @@ function tryReadData(options, backendResponse, request, next) {
 		try {
 			// Supplement req with data from BE
 			request[options.key] = JSON.parse(Buffer.concat(stringBody).toString('utf8'));
+			handled = true;
+			next();
 		} catch (error) {
 			return next(new MiddlewareError(error));
 		}
-
-		next();
 	});
 
-	// let abortHandled = false;
-	// response.on('aborted', () => {
-	// 	// const bytesRead = stringBody.reduce((total, buffer) => total + buffer.length, 0);
-	// 	// abortHandled = true;
-	//
-	// 	// if (backendResponse.headers['content-length'] === bytesRead) {
-	// 	// 	// Try decode the response anyway as we have manage to finish reading
-	// 	// 	next();
-	// 	// } else {
-	// 	// 	next(new MiddlewareError('Socket was closed before the response could be read'));
-	// 	// }
-	// });
-	//
-	// response.on('close', () => {
-	// 	if (!abortHandled) {
-	// 		// it were not an abort
-	// 		resolve();
-	// 		return;
-	// 	}
-	//
-	// 	reject(new MiddlewareError('Socket was closed before the backend response had finished being read'));
-	// });
+	backendResponse.on('aborted', () => {
+		handled = true;
+		next(new MiddlewareError('Stream was aborted before the response could be read'));
+	});
+
+	backendResponse.on('close', () => {
+		if (!handled) {
+			// it were not an abort
+			return next(new MiddlewareError('Stream was closed before the response could be read'));
+		}
+	});
 
 	backendResponse.on('error', error => {
 		next(error);
