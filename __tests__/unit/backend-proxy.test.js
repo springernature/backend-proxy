@@ -287,6 +287,49 @@ describe('Backend Proxy', () => {
 			expect(next).toHaveBeenCalledWith(new Error('stream error'));
 		});
 
+		test('catches the backend stream being aborted', () => {
+			// Given
+			const middleware = backendProxy(baseOptions);
+			middleware(mockRequest, undefined, next);
+			proxyRequest.emit('response', backendResponse);
+
+			// When
+			backendResponse.emit('aborted');
+
+			// Then
+			expect(next).toHaveBeenCalledWith(new Error('Stream was aborted before the response could be read'));
+		});
+
+		test('catches the backend stream being closed', () => {
+			// Given
+			const middleware = backendProxy(baseOptions);
+			middleware(mockRequest, undefined, next);
+			proxyRequest.emit('response', backendResponse);
+
+			// When
+			backendResponse.emit('close');
+
+			// Then
+			expect(next).toHaveBeenCalledWith(new Error('Stream was closed before the response could be read'));
+		});
+
+		describe('when the stream gets aborted', () => {
+			test('does not call next when the stream is then closed', () => {
+				// Given
+				const middleware = backendProxy(baseOptions);
+				middleware(mockRequest, undefined, next);
+				proxyRequest.emit('response', backendResponse);
+
+				// When
+				backendResponse.emit('aborted');
+				backendResponse.emit('close');
+
+				// Then
+				expect(next).toHaveBeenCalledTimes(1);
+				expect(next).toHaveBeenCalledWith(new Error('Stream was aborted before the response could be read'));
+			});
+		});
+
 		describe('when interceptErrors is on', () => {
 			let middleware;
 

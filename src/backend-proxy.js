@@ -13,6 +13,71 @@ const defaultOptions = {
 	interceptErrors: false
 };
 
+function tryReadData(options, backendResponse, request, next) {
+	let handled = false;
+
+	const stringBody = [];
+	// Read the backend response off in chunks then deserialize it
+	backendResponse.on('data', chunk => stringBody.push(chunk));
+	backendResponse.on('end', () => {
+		try {
+			// Supplement req with data from BE
+			request[options.key] = JSON.parse(Buffer.concat(stringBody).toString('utf8'));
+			handled = true;
+			next();
+		} catch (error) {
+			return next(new MiddlewareError(error));
+		}
+	});
+
+	backendResponse.on('aborted', () => {
+		handled = true;
+		next(new MiddlewareError('Stream was aborted before the response could be read'));
+	});
+
+	backendResponse.on('close', () => {
+		if (!handled) {
+			// it were not an abort
+			return next(new MiddlewareError('Stream was closed before the response could be read'));
+		}
+	});
+
+	backendResponse.on('error', error => {
+		next(error);
+	});
+}
+
+function createHandler({request, response, next, options, backendHttpOptions}) {
+	return backendResponse => {
+		const contentType = (backendResponse.headers['content-type'] || '').toLowerCase();
+
+		if (contentType === options.requiredContentType || contentType === `${options.requiredContentType}; charset=utf-8`) {
+			return tryReadData(options, backendResponse, request, next);
+		}
+
+		// We don't have the correct content-type, usually this is because a backend responded with a redirect
+		// or an error
+		response.statusCode = backendResponse.statusCode;
+
+		// Should we intercept the error and raise it as an express error
+		if (options.interceptErrors && backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599) {
+			return next({statusCode: backendResponse.statusCode, backendResponse: backendResponse});
+		}
+
+		// If it's a redirect we need to rewrite the URL to be relative (to the frontend)
+		if (backendResponse.statusCode >= 300 && backendResponse.statusCode <= 399 && backendResponse.headers.location) {
+			if (backendResponse.headers.location.includes(backendHttpOptions.host)) {
+				const locationUrl = new url.URL(backendResponse.headers.location);
+				backendResponse.headers.location = locationUrl.pathname + locationUrl.search + locationUrl.hash;
+			}
+		}
+
+		// Proxy the headers and backend response to the client
+		response.header(backendResponse.headers);
+		backendResponse.pipe(response);
+	};
+}
+
 /**
  * Proxies all requests to the given backend.
  * When the response matches the configured content-type, the response will be parsed and stored on the request
@@ -62,52 +127,10 @@ function backendProxy(options) {
 		// Pipe the incoming request through to the backend
 		const proxiedRequest = request.pipe(http.request(requestOptions));
 
-		proxiedRequest.on('response', backendResponse => {
-			const contentType = (backendResponse.headers['content-type'] || '').toLowerCase();
+		const handler = createHandler({request, response, next, options, backendHttpOptions});
+		proxiedRequest.on('response', handler);
 
-			if (contentType === options.requiredContentType || contentType === `${options.requiredContentType}; charset=utf-8`) {
-				const stringBody = [];
-				// Read the backend response off in chunks then deserialize it
-				backendResponse.on('data', chunk => stringBody.push(chunk));
-				backendResponse.on('end', () => {
-					try {
-						// Supplement req with data from BE
-						request[options.key] = JSON.parse(Buffer.concat(stringBody).toString('utf8'));
-						next();
-					} catch (error) {
-						next(new MiddlewareError(error));
-					}
-				});
-				backendResponse.on('error', error => {
-					next(error);
-				});
-			} else {
-				// We don't have the correct content-type, usually this is because a backend responded with a redirect
-				// or an error
-				response.statusCode = backendResponse.statusCode;
-
-				// Should we intercept the error and raise it as an express error
-				if (options.interceptErrors && backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599) {
-					return next({statusCode: backendResponse.statusCode, backendResponse: backendResponse});
-				}
-
-				// If it's a redirect we need to rewrite the URL to be relative (to the frontend)
-				if (backendResponse.statusCode >= 300 && backendResponse.statusCode <= 399 && backendResponse.headers.location) {
-					if (backendResponse.headers.location.includes(backendHttpOptions.host)) {
-						const locationUrl = new url.URL(backendResponse.headers.location);
-						backendResponse.headers.location = locationUrl.pathname + locationUrl.search + locationUrl.hash;
-					}
-				}
-
-				// Proxy the headers and backend response to the client
-				response.header(backendResponse.headers);
-				backendResponse.pipe(response);
-			}
-		});
-
-		proxiedRequest.on('error', error => {
-			next(error);
-		});
+		proxiedRequest.on('error', error => next(error));
 	};
 }
 
