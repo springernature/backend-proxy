@@ -23,19 +23,6 @@ app.use('/usePathOn', backendProxy({
 	requiredContentType: 'application/x+json'
 }));
 
-app.use('/changeHostOn', backendProxy({
-	backend,
-	usePath: true,
-	requiredContentType: 'application/x+json',
-	changeHost: true
-}));
-
-app.get('/interceptOn', backendProxy({
-	backend,
-	requiredContentType: 'application/x+json',
-	interceptErrors: true
-}));
-
 // Always return the backendResponse field as json
 app.use('*', (request, response) => {
 	response.json(request.backendResponse);
@@ -85,7 +72,7 @@ describe('Backend proxy integration', () => {
 			});
 	});
 
-	test('proxies a request with a changed host', () => {
+	test('changes host when proxying', () => {
 		const backendData = {
 			hello: 'world 3'
 		};
@@ -100,7 +87,7 @@ describe('Backend proxy integration', () => {
 		}).get('/abc/123')
 			.reply(200, backendData, {'Content-Type': 'application/x+json'});
 
-		return request.get('/changeHostOn/abc/123')
+		return request.get('/usePathOn/abc/123')
 			.then(response => {
 				scope.done();
 
@@ -152,10 +139,10 @@ describe('Backend proxy integration', () => {
 	});
 
 	test('intercepts an error from the backend', () => {
-		const scope = nock(backend).get('/interceptOn')
+		const scope = nock(backend).get('/error')
 			.reply(401, 'You are not authorised to view this content', {'content-type': 'text/plain'});
 
-		return request.get('/interceptOn')
+		return request.get('/usePathOn/error')
 			.then(response => {
 				scope.done();
 

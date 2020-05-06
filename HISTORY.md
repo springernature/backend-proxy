@@ -1,5 +1,11 @@
 # History
 
+## 2.0.0
+_06/05/20_
+
+- Remove `changeHost` and `interceptErrors`. ([joeyciechanowicz](https://github.com/joeyciechanowicz))
+- Raise an error if the backend responds with `400 - 599`. ([joeyciechanowicz](https://github.com/joeyciechanowicz))
+
 ## 1.4.1
 _27/03/20_
 
