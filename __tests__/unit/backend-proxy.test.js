@@ -77,6 +77,10 @@ describe('Backend Proxy', () => {
 		mockRequest.pipe.mockReturnValueOnce({
 			on: jest.fn()
 		});
+		mockRequest.headers = {
+			...mockRequest.headers,
+			host: 'original.host:8080'
+		};
 
 		// When
 		middleware(mockRequest, undefined, next);
@@ -88,7 +92,11 @@ describe('Backend Proxy', () => {
 			hostname: 'backend.local',
 			path: mockRequest.url,
 			method: mockRequest.method,
-			headers: mockRequest.headers
+			headers: {
+				...mockRequest.headers,
+				host: 'backend.local',
+				'X-Orig-Host': 'original.host:8080'
+			}
 		}));
 		// We haven't simulated an error or a response so next should not have been called at this point
 		expect(next).not.toHaveBeenCalled();
@@ -114,36 +122,6 @@ describe('Backend Proxy', () => {
 			path: '/sub/path',
 			method: mockRequest.method,
 			headers: mockRequest.headers
-		}));
-		// We haven't simulated an error or a response so next should not have been called at this point
-		expect(next).not.toHaveBeenCalled();
-	});
-
-	test(`pipes the request to the backend with the host header changed when changeHost is true`, () => {
-		// Given
-		const middleware = backendProxy({
-			...baseOptions,
-			usePath: false,
-			backend: 'http://backend.local/sub/path',
-			changeHost: true
-		});
-		mockRequest.headers = {
-			host: 'original.host:8080'
-		};
-
-		// When
-		middleware(mockRequest, undefined, next);
-
-		// Then
-		expect(request).toHaveBeenCalledWith(expect.objectContaining({
-			hostname: 'backend.local',
-			path: '/sub/path',
-			method: mockRequest.method,
-			headers: {
-				...mockRequest.headers,
-				host: 'backend.local',
-				'X-Orig-Host': 'original.host:8080'
-			}
 		}));
 		// We haven't simulated an error or a response so next should not have been called at this point
 		expect(next).not.toHaveBeenCalled();

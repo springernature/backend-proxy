@@ -9,7 +9,6 @@ const defaultOptions = {
 	key: 'backendResponse',
 	usePath: true,
 	requiredContentType: 'application/json',
-	changeHost: false,
 	interceptErrors: false
 };
 
@@ -89,7 +88,6 @@ function createHandler({request, response, next, options, backendHttpOptions}) {
  * @param {string} [options.requiredContentType=application/json] - The backend response content type to store for rendering, defaults to "application/json"
  * @param {boolean} [options.usePath=true] - Append the incoming HTTP request path to the backend URL
  * @param {string} [options.key=backendResponse] - The property name that the backend response is stored at
- * @param {boolean} [options.changeHost=false] - Should the request to the backend have its host field set to the backend url
  * @param {boolean} [options.interceptErrors=false] - Should backend responses with HTTP 400 - 599 be intercepted and raised as express errors
  * @returns {function} - An Express middleware
  */
@@ -119,10 +117,8 @@ function backendProxy(options) {
 			path: options.usePath ? basePath + request.url : backendHttpOptions.pathname
 		};
 
-		if (options.changeHost) {
-			request.headers['X-Orig-Host'] = request.headers.host;
-			request.headers.host = backendHttpOptions.host;
-		}
+		request.headers['X-Orig-Host'] = request.headers.host;
+		request.headers.host = backendHttpOptions.host;
 
 		// Pipe the incoming request through to the backend
 		const proxiedRequest = request.pipe(http.request(requestOptions));
