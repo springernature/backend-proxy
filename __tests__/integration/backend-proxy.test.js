@@ -23,12 +23,6 @@ app.use('/usePathOn', backendProxy({
 	requiredContentType: 'application/x+json'
 }));
 
-app.get('/interceptOn', backendProxy({
-	backend,
-	requiredContentType: 'application/x+json',
-	interceptErrors: true
-}));
-
 // Always return the backendResponse field as json
 app.use('*', (request, response) => {
 	response.json(request.backendResponse);
@@ -145,10 +139,10 @@ describe('Backend proxy integration', () => {
 	});
 
 	test('intercepts an error from the backend', () => {
-		const scope = nock(backend).get('/interceptOn')
+		const scope = nock(backend).get('/error')
 			.reply(401, 'You are not authorised to view this content', {'content-type': 'text/plain'});
 
-		return request.get('/interceptOn')
+		return request.get('/usePathOn/error')
 			.then(response => {
 				scope.done();
 

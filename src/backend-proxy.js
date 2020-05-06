@@ -8,8 +8,7 @@ const keepAliveAgent = new http.Agent({keepAlive: true});
 const defaultOptions = {
 	key: 'backendResponse',
 	usePath: true,
-	requiredContentType: 'application/json',
-	interceptErrors: false
+	requiredContentType: 'application/json'
 };
 
 function tryReadData(options, backendResponse, request, next) {
@@ -48,32 +47,34 @@ function tryReadData(options, backendResponse, request, next) {
 
 function createHandler({request, response, next, options, backendHttpOptions}) {
 	return backendResponse => {
-		const contentType = (backendResponse.headers['content-type'] || '').toLowerCase();
-
-		if (contentType === options.requiredContentType || contentType === `${options.requiredContentType}; charset=utf-8`) {
-			return tryReadData(options, backendResponse, request, next);
-		}
-
-		// We don't have the correct content-type, usually this is because a backend responded with a redirect
-		// or an error
+		// We always want to copy the status code back to the client
 		response.statusCode = backendResponse.statusCode;
 
 		// Should we intercept the error and raise it as an express error
-		if (options.interceptErrors && backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599) {
-			return next({statusCode: backendResponse.statusCode, backendResponse: backendResponse});
+		if (backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599) {
+			return next({statusCode: backendResponse.statusCode});
 		}
 
-		// If it's a redirect we need to rewrite the URL to be relative (to the frontend)
-		if (backendResponse.statusCode >= 300 && backendResponse.statusCode <= 399 && backendResponse.headers.location) {
-			if (backendResponse.headers.location.includes(backendHttpOptions.host)) {
-				const locationUrl = new url.URL(backendResponse.headers.location);
-				backendResponse.headers.location = locationUrl.pathname + locationUrl.search + locationUrl.hash;
+		const contentType = (backendResponse.headers['content-type'] || '').toLowerCase();
+
+		if (contentType === options.requiredContentType || contentType === `${options.requiredContentType}; charset=utf-8`) {
+			tryReadData(options, backendResponse, request, next);
+		} else {
+			// We don't have the correct content-type, usually this is because a backend responded with a redirect
+			// or an error
+
+			// If it's a redirect we need to rewrite the URL to be relative (to the frontend)
+			if (backendResponse.statusCode >= 300 && backendResponse.statusCode <= 399 && backendResponse.headers.location) {
+				if (backendResponse.headers.location.includes(backendHttpOptions.host)) {
+					const locationUrl = new url.URL(backendResponse.headers.location);
+					backendResponse.headers.location = locationUrl.pathname + locationUrl.search + locationUrl.hash;
+				}
 			}
-		}
 
-		// Proxy the headers and backend response to the client
-		response.header(backendResponse.headers);
-		backendResponse.pipe(response);
+			// Proxy the headers and backend response to the client
+			response.header(backendResponse.headers);
+			backendResponse.pipe(response);
+		}
 	};
 }
 
@@ -88,7 +89,6 @@ function createHandler({request, response, next, options, backendHttpOptions}) {
  * @param {string} [options.requiredContentType=application/json] - The backend response content type to store for rendering, defaults to "application/json"
  * @param {boolean} [options.usePath=true] - Append the incoming HTTP request path to the backend URL
  * @param {string} [options.key=backendResponse] - The property name that the backend response is stored at
- * @param {boolean} [options.interceptErrors=false] - Should backend responses with HTTP 400 - 599 be intercepted and raised as express errors
  * @returns {function} - An Express middleware
  */
 function backendProxy(options) {

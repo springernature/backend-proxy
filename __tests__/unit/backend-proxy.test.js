@@ -14,6 +14,7 @@ describe('Backend Proxy', () => {
 	};
 
 	let mockRequest;
+	let mockResponse;
 	let next;
 	let proxyRequest;
 	let backendResponse;
@@ -31,6 +32,8 @@ describe('Backend Proxy', () => {
 				'some-header': 'header-value'
 			}
 		};
+
+		mockResponse = {};
 
 		next = jest.fn();
 
@@ -64,7 +67,7 @@ describe('Backend Proxy', () => {
 		mockRequest[baseOptions.key] = true;
 
 		// When
-		middleware(mockRequest, undefined, next);
+		middleware(mockRequest, mockResponse, next);
 
 		// Then
 		expect(next).toHaveBeenCalledTimes(1);
@@ -83,7 +86,7 @@ describe('Backend Proxy', () => {
 		};
 
 		// When
-		middleware(mockRequest, undefined, next);
+		middleware(mockRequest, mockResponse, next);
 
 		// Then
 		expect(mockRequest.pipe).toHaveBeenCalledTimes(1);
@@ -114,7 +117,7 @@ describe('Backend Proxy', () => {
 		});
 
 		// When
-		middleware(mockRequest, undefined, next);
+		middleware(mockRequest, mockResponse, next);
 
 		// Then
 		expect(request).toHaveBeenCalledWith(expect.objectContaining({
@@ -131,7 +134,7 @@ describe('Backend Proxy', () => {
 		test('passes an error on to next', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
-			middleware(mockRequest, undefined, next);
+			middleware(mockRequest, mockResponse, next);
 			const error = {code: 'some error'};
 
 			// When
@@ -195,8 +198,9 @@ describe('Backend Proxy', () => {
 				field4: 'value4'
 			};
 			const parts = JSON.stringify(backendBody).match(/.{1,2}/g);
+			backendResponse.statusCode = 200;
 
-			middleware(mockRequest, undefined, next);
+			middleware(mockRequest, mockResponse, next);
 			proxyRequest.emit('response', backendResponse);
 
 			// When
@@ -204,6 +208,7 @@ describe('Backend Proxy', () => {
 			backendResponse.emit('end');
 
 			// Then
+			expect(mockResponse.statusCode).toEqual(200);
 			expect(mockRequest[baseOptions.key]).toEqual(backendBody);
 			expect(next).toHaveBeenCalledTimes(1);
 		});
@@ -221,7 +226,7 @@ describe('Backend Proxy', () => {
 			};
 			const parts = JSON.stringify(backendBody).match(/.{1,2}/g);
 
-			middleware(mockRequest, undefined, next);
+			middleware(mockRequest, mockResponse, next);
 			proxyRequest.emit('response', backendResponse);
 
 			// When
@@ -238,7 +243,7 @@ describe('Backend Proxy', () => {
 			const middleware = backendProxy(baseOptions);
 			const parts = ['definitely', 'not', '{};; json'];
 
-			middleware(mockRequest, undefined, next);
+			middleware(mockRequest, mockResponse, next);
 			proxyRequest.emit('response', backendResponse);
 
 			// When
@@ -255,7 +260,7 @@ describe('Backend Proxy', () => {
 		test('catches an error reading the backend stream', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
-			middleware(mockRequest, undefined, next);
+			middleware(mockRequest, mockResponse, next);
 			proxyRequest.emit('response', backendResponse);
 
 			// When
@@ -268,7 +273,7 @@ describe('Backend Proxy', () => {
 		test('catches the backend stream being aborted', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
-			middleware(mockRequest, undefined, next);
+			middleware(mockRequest, mockResponse, next);
 			proxyRequest.emit('response', backendResponse);
 
 			// When
@@ -281,7 +286,7 @@ describe('Backend Proxy', () => {
 		test('catches the backend stream being closed', () => {
 			// Given
 			const middleware = backendProxy(baseOptions);
-			middleware(mockRequest, undefined, next);
+			middleware(mockRequest, mockResponse, next);
 			proxyRequest.emit('response', backendResponse);
 
 			// When
@@ -295,7 +300,7 @@ describe('Backend Proxy', () => {
 			test('does not call next when the stream is then closed', () => {
 				// Given
 				const middleware = backendProxy(baseOptions);
-				middleware(mockRequest, undefined, next);
+				middleware(mockRequest, mockResponse, next);
 				proxyRequest.emit('response', backendResponse);
 
 				// When
@@ -308,30 +313,17 @@ describe('Backend Proxy', () => {
 			});
 		});
 
-		describe('when interceptErrors is on', () => {
+		describe('when the backend responds with an error', () => {
 			let middleware;
 
 			beforeEach(() => {
 				middleware = backendProxy({
-					...baseOptions,
-					interceptErrors: true
+					...baseOptions
 				});
 
 				middleware(mockRequest, response, next);
 
 				backendResponse.headers = {};
-			});
-
-			test('does not intercept a 200', () => {
-				// When
-				proxyRequest.emit('response', backendResponse);
-
-				// Then
-				expect(backendResponse.pipe).toHaveBeenCalledTimes(1);
-				expect(backendResponse.pipe).toHaveBeenCalledWith(response);
-				expect(response.header).toHaveBeenCalledWith(backendResponse.headers);
-				expect(response.statusCode).toBe(backendResponse.statusCode);
-				expect(next).not.toHaveBeenCalled();
 			});
 
 			test.each(
@@ -349,8 +341,7 @@ describe('Backend Proxy', () => {
 				expect(response.statusCode).toBe(statusCode);
 				expect(next).toHaveBeenCalledTimes(1);
 				expect(next).toHaveBeenCalledWith({
-					statusCode: statusCode,
-					backendResponse: backendResponse
+					statusCode: statusCode
 				});
 			});
 		});
