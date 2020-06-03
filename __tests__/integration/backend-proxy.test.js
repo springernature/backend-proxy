@@ -138,7 +138,7 @@ describe('Backend proxy integration', () => {
 			});
 	});
 
-	test('intercepts an error from the backend', () => {
+	test('proxies a client error from the backend', () => {
 		const scope = nock(backend).get('/error')
 			.reply(401, 'You are not authorised to view this content', {'content-type': 'text/plain'});
 
@@ -147,7 +147,20 @@ describe('Backend proxy integration', () => {
 				scope.done();
 
 				expect(response.status).toBe(401);
-				expect(response.text).toEqual(`Error 401`);
+				expect(response.text).toEqual('You are not authorised to view this content');
+			});
+	});
+
+	test('intercepts an error from the backend', () => {
+		const scope = nock(backend).get('/error')
+			.reply(501, 'Something went wrong', {'content-type': 'text/plain'});
+
+		return request.get('/usePathOn/error')
+			.then(response => {
+				scope.done();
+
+				expect(response.status).toBe(501);
+				expect(response.text).toEqual(`Error 501`);
 			});
 	});
 });
