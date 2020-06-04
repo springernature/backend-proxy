@@ -313,7 +313,7 @@ describe('Backend Proxy', () => {
 			});
 		});
 
-		describe('when the backend responds with an error', () => {
+		describe('when the backend responds with a server error', () => {
 			let middleware;
 
 			beforeEach(() => {
@@ -327,7 +327,7 @@ describe('Backend Proxy', () => {
 			});
 
 			test.each(
-				[400, 404, 500, 599]
+				[500, 599]
 			)('intercepts a %s request and raises it as an express error', statusCode => {
 				// Given
 				backendResponse.statusCode = statusCode;
@@ -343,6 +343,37 @@ describe('Backend Proxy', () => {
 				expect(next).toHaveBeenCalledWith({
 					statusCode: statusCode
 				});
+			});
+		});
+
+		describe('when the backend responds with a client error', () => {
+			let middleware;
+
+			beforeEach(() => {
+				middleware = backendProxy({
+					...baseOptions
+				});
+
+				middleware(mockRequest, response, next);
+
+				backendResponse.headers = {};
+			});
+
+			test.each(
+				[400, 401, 404, 418]
+			)('intercepts a %s request and pipes it to the frontend', statusCode => {
+				// Given
+				backendResponse.statusCode = statusCode;
+
+				// When
+				proxyRequest.emit('response', backendResponse);
+
+				// Then
+				expect(backendResponse.pipe).toHaveBeenCalled();
+				expect(response.header).toHaveBeenCalledWith({...backendResponse.headers});
+				expect(response.statusCode).toBe(statusCode);
+				expect(next).not.toHaveBeenCalled();
+				expect(response.statusCode).toBe(backendResponse.statusCode);
 			});
 		});
 

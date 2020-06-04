@@ -51,7 +51,7 @@ function createHandler({request, response, next, options, backendHttpOptions}) {
 		response.statusCode = backendResponse.statusCode;
 
 		// Should we intercept the error and raise it as an express error
-		if (backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599) {
+		if (backendResponse.statusCode >= 500 && backendResponse.statusCode <= 599) {
 			return next({statusCode: backendResponse.statusCode});
 		}
 
