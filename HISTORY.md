@@ -1,5 +1,10 @@
 # History
 
+## 2.0.1
+_05/06/20_
+
+- Returns client error status codes from the backend and only raises errors if the backend responds with `500 - 599`. ([springerBuck](https://github.com/springerBuck))
+
 ## 2.0.0
 _06/05/20_
 
