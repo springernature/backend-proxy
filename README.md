@@ -18,7 +18,7 @@ npm install --save @springernature/backend-proxy
 
 ### `backendProxy(options)`
 
-The `backend-proxy` middleware will take all incoming HTTP requests and forward them to a backend service. The backend response will then be stored on the original HTTP request to be used by your application, or automatically rendered using `render-backend-response`.
+The `backend-proxy` middleware will take all incoming HTTP requests and forward them to a backend service. The backend response will then be stored on the original HTTP request to be used by your application, or automatically rendered using `render-backend-response`. The status code from the backend will also be returned, this includes client errors (40X). However, server errors (50X) will result in an error being raised. 
 
 ```js
 const {backendProxy} = require('@springernature/backend-proxy');
