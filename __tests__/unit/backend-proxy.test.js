@@ -361,7 +361,7 @@ describe('Backend Proxy', () => {
 
 			test.each(
 				[400, 401, 404, 418]
-			)('intercepts a %s request and pipes it to the frontend', statusCode => {
+			)('intercepts a %s request and proxies it to the client', statusCode => {
 				// Given
 				backendResponse.statusCode = statusCode;
 
