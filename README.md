@@ -33,7 +33,7 @@ app.get('*', (req, res) => res.json(req.backendResponse));
 app.use('/login', backendProxy({
     backend: 'http://other.backebd/login',
     usePath: false,
-	interceptErrors: true
+    interceptErrors: true
 }), (req, res) => {
 	res.render('login', req.backendResponse);
 });
