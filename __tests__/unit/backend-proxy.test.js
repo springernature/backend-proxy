@@ -377,6 +377,97 @@ describe('Backend Proxy', () => {
 			});
 		});
 
+		describe('when interceptErrors is passed as `true` and the backend responds with a error', () => {
+			let middleware;
+			const errorsToPipeToFrontend = [400, 404];
+			const errorsToIntercept = [401, 418];
+			const errorsInterceptedByDefault = [500, 599];
+
+			beforeEach(() => {
+				middleware = backendProxy({
+					...baseOptions,
+					interceptErrors: backendResponse => errorsToIntercept.includes(backendResponse.statusCode)
+				});
+
+				middleware(mockRequest, response, next);
+
+				backendResponse.headers = {};
+			});
+
+			test.each(
+				[
+					...errorsToIntercept,
+					...errorsInterceptedByDefault
+				]
+			)('intercepts a %s request and raises it as an express error', statusCode => {
+				// Given
+				backendResponse.statusCode = statusCode;
+
+				// When
+				proxyRequest.emit('response', backendResponse);
+
+				// Then
+				expect(backendResponse.pipe).not.toHaveBeenCalled();
+				expect(response.header).not.toHaveBeenCalledWith();
+				expect(response.statusCode).toBe(statusCode);
+				expect(next).toHaveBeenCalledTimes(1);
+				expect(next).toHaveBeenCalledWith({
+					statusCode: statusCode
+				});
+			});
+
+			test.each(
+				errorsToPipeToFrontend
+			)('intercepts a %s request and proxies it to the client', statusCode => {
+				// Given
+				backendResponse.statusCode = statusCode;
+
+				// When
+				proxyRequest.emit('response', backendResponse);
+
+				// Then
+				expect(backendResponse.pipe).toHaveBeenCalled();
+				expect(response.header).toHaveBeenCalledWith({...backendResponse.headers});
+				expect(response.statusCode).toBe(statusCode);
+				expect(next).not.toHaveBeenCalled();
+				expect(response.statusCode).toBe(backendResponse.statusCode);
+			});
+		});
+
+		describe('when interceptErrors is passed as a function and the backend responds with a error', () => {
+			let middleware;
+
+			beforeEach(() => {
+				middleware = backendProxy({
+					...baseOptions,
+					interceptErrors: true
+				});
+
+				middleware(mockRequest, response, next);
+
+				backendResponse.headers = {};
+			});
+
+			test.each(
+				[400, 401, 404, 418, 500, 599]
+			)('intercepts a %s request and raises it as an express error', statusCode => {
+				// Given
+				backendResponse.statusCode = statusCode;
+
+				// When
+				proxyRequest.emit('response', backendResponse);
+
+				// Then
+				expect(backendResponse.pipe).not.toHaveBeenCalled();
+				expect(response.header).not.toHaveBeenCalledWith();
+				expect(response.statusCode).toBe(statusCode);
+				expect(next).toHaveBeenCalledTimes(1);
+				expect(next).toHaveBeenCalledWith({
+					statusCode: statusCode
+				});
+			});
+		});
+
 		describe('redirect', () => {
 			let middleware;
 
