@@ -1,6 +1,6 @@
 # History
 
-## 2.2.0
+## 2.1.0
 _19/06/20_
 
 - Re-introduce `interceptErrors`, as a multiple type (`boolean`|`function`) option
