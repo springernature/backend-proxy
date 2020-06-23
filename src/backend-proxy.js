@@ -8,8 +8,7 @@ const keepAliveAgent = new http.Agent({keepAlive: true});
 const defaultOptions = {
 	key: 'backendResponse',
 	usePath: true,
-	requiredContentType: 'application/json',
-	interceptErrors: false
+	requiredContentType: 'application/json'
 };
 
 function tryReadData(options, backendResponse, request, next) {
@@ -51,23 +50,19 @@ function createHandler({request, response, next, options, backendHttpOptions}) {
 
 	if (typeof options.interceptErrors === 'function') {
 		interceptErrors = options.interceptErrors;
-	} else if (options.interceptErrors === true) {
-		interceptErrors = () => true;
+	} else if (typeof options.interceptErrors === 'boolean') {
+		interceptErrors = () => options.interceptErrors;
 	} else {
-		interceptErrors = () => false;
+		// By default we do raise an express error for 500 - 599 errors
+		interceptErrors = backendResponse => backendResponse.statusCode >= 500 && backendResponse.statusCode <= 599;
 	}
 
 	return backendResponse => {
 		// We always want to copy the status code back to the client
 		response.statusCode = backendResponse.statusCode;
 
-		// Should we intercept the error and raise it as an express error
-		if (backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599 && interceptErrors(backendResponse)) {
-			return next({statusCode: backendResponse.statusCode});
-		}
-
-		// By default we do raise it as an express error for 500 - 599
-		if (backendResponse.statusCode >= 500 && backendResponse.statusCode <= 599) {
+		if (interceptErrors(backendResponse) &&
+			backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599) {
 			return next({statusCode: backendResponse.statusCode});
 		}
 
