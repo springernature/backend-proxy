@@ -61,8 +61,8 @@ function createHandler({request, response, next, options, backendHttpOptions}) {
 		// We always want to copy the status code back to the client
 		response.statusCode = backendResponse.statusCode;
 
-		if (interceptErrors(backendResponse) &&
-			backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599) {
+		if (backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599
+		       && interceptErrors(backendResponse)) {
 			return next({statusCode: backendResponse.statusCode});
 		}
 
