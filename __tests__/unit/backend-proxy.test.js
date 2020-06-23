@@ -377,7 +377,7 @@ describe('Backend Proxy', () => {
 			});
 		});
 
-		describe('when interceptErrors is passed as `true` and the backend responds with a error', () => {
+		describe('when interceptErrors is passed as a function and the backend responds with a error', () => {
 			let middleware;
 			const errorsToPipeToFrontend = [400, 404];
 			const errorsToIntercept = [401, 418];
@@ -434,7 +434,7 @@ describe('Backend Proxy', () => {
 			});
 		});
 
-		describe('when interceptErrors is passed as a function and the backend responds with a error', () => {
+		describe('when interceptErrors is passed as `true` and the backend responds with a error', () => {
 			let middleware;
 
 			beforeEach(() => {
