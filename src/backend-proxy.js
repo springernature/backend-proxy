@@ -57,8 +57,8 @@ function createHandler({request, response, next, options, backendHttpOptions}) {
 
 		if (typeof options.interceptErrors === 'function') {
 			interceptErrors = options.interceptErrors(backendResponse);
-		} else if (typeof options.interceptErrors === 'boolean') {
-			interceptErrors = options.interceptErrors;
+		} else {
+			interceptErrors = options.interceptErrors === true;
 		}
 
 		if (interceptErrors && backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599) {
