@@ -18,7 +18,9 @@ npm install --save @springernature/backend-proxy
 
 ### `backendProxy(options)`
 
-The `backend-proxy` middleware will take all incoming HTTP requests and forward them to a backend service. The backend response will then be stored on the original HTTP request to be used by your application, or automatically rendered using `render-backend-response`. The status code from the backend will also be returned, this includes client errors (40X). However, server errors (50X) will result in an error being raised. 
+The `backend-proxy` middleware will take all incoming HTTP requests and forward them to a backend service. The backend response will then be stored on the original HTTP request to be used by your application, or automatically rendered using `render-backend-response`. The status code from the backend will also be returned.
+
+By default, client errors (`400 - 499`) are proxied to the client and server errors (`500 - 599`) will result in an error being raised. This behaviour can be amended by setting the `interceptErrors` option to `true` or a custom `function`. Using a custom function as value for the `interceptErrors` option; you can, for a subset of `4XX - 5XX` errors, raise them rather than have them proxied to the client. 
 
 ```js
 const {backendProxy} = require('@springernature/backend-proxy');
@@ -30,7 +32,8 @@ app.get('*', (req, res) => res.json(req.backendResponse));
 // Proxy a specific route to a specific backend
 app.use('/login', backendProxy({
     backend: 'http://other.backebd/login',
-    usePath: false
+    usePath: false,
+    interceptErrors: true
 }), (req, res) => {
 	res.render('login', req.backendResponse);
 });
@@ -43,6 +46,7 @@ The following table describe the properties of the `options` object.
 | `backend` | Backend service to proxy requests to | string |  |
 | `requiredContentType` | Backend response content type thats required to allow interception and deserialization | string | `application/json` |
 | `usePath` | Should the incoming HTTP request's path be apended to the `backend` URL | boolean | `true` |
+| `interceptErrors` | Should backend responses with HTTP 400 - 599 be intercepted and raised as express errors. If provided as a function, it takes the backendResponse as parameter and returns a boolean. This gives the frontend the flexibility to decided on a per-response status code basis. | undefined, boolean or function | `undefined` |
 | `key` | The property on the request object that the backend response will be stored under. | string | `backendResponse` |
 
 ### `renderBackendResponse(options)`

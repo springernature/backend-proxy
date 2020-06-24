@@ -1,5 +1,11 @@
 # History
 
+## 2.1.0
+_19/06/20_
+
+- Re-introduce `interceptErrors`, as a multiple type (`boolean`|`function`) option
+	in order to offer more flexibility on rather to raise a `400 - 599` error or to proxy it to the client. ([morgaan](https://github.com/morgaan))
+
 ## 2.0.1
 _05/06/20_
 

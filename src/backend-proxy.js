@@ -46,12 +46,23 @@ function tryReadData(options, backendResponse, request, next) {
 }
 
 function createHandler({request, response, next, options, backendHttpOptions}) {
+	let interceptErrors;
+
+	if (typeof options.interceptErrors === 'function') {
+		interceptErrors = options.interceptErrors;
+	} else if (typeof options.interceptErrors === 'boolean') {
+		interceptErrors = () => options.interceptErrors;
+	} else {
+		// By default we do raise an express error for 500 - 599 errors
+		interceptErrors = backendResponse => backendResponse.statusCode >= 500 && backendResponse.statusCode <= 599;
+	}
+
 	return backendResponse => {
 		// We always want to copy the status code back to the client
 		response.statusCode = backendResponse.statusCode;
 
-		// Should we intercept the error and raise it as an express error
-		if (backendResponse.statusCode >= 500 && backendResponse.statusCode <= 599) {
+		if (backendResponse.statusCode >= 400 && backendResponse.statusCode <= 599 &&
+			interceptErrors(backendResponse)) {
 			return next({statusCode: backendResponse.statusCode});
 		}
 
