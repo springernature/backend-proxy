@@ -1,5 +1,12 @@
 # History
 
+## 2.2.0
+
+_08/07/20_
+
+- `backendHeaders` option added, in order to offer the ability to supplement
+	the outgoing HTTP response headers with some of the Backend response headers. ([morgaan](https://github.com/morgaan))
+
 ## 2.1.0
 _19/06/20_
 
