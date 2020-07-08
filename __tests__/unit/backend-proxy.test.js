@@ -214,7 +214,7 @@ describe('Backend Proxy', () => {
 			expect(next).toHaveBeenCalledTimes(1);
 		});
 
-		test('supplements, the outgoing HTTP response headers with headers name from backendHeaders option', () => {
+		test('only copies the backend headers that are specified in the options', () => {
 			// Given
 			const middleware = backendProxy({
 				...baseOptions,
