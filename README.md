@@ -49,7 +49,7 @@ The following table describe the properties of the `options` object.
 | `usePath` | Should the incoming HTTP request's path be appended to the `backend` URL | boolean | `true` |
 | `interceptErrors` | Should backend responses with HTTP 400 - 599 be intercepted and raised as express errors. If provided as a function, it takes the backendResponse as parameter and returns a boolean. This gives the frontend the flexibility to decided on a per-response status code basis. | undefined, boolean or function | `undefined` |
 | `key` | The property on the request object that the backend response will be stored under. | string | `backendResponse` |
-| `backendHeaders` | List of headers from the Backend response that should supplement the outgoing HTTP response headers (e.g. `set-cookie`...) | string[] |  |
+| `backendHeaders` | List of headers to copy from a Backend response to the outgoing client response (e.g. `Set-Cookie`...) | string[] |  |
 
 ### `renderBackendResponse(options)`
 
