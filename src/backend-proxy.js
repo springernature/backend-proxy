@@ -19,7 +19,7 @@ function tryReadData(options, backendResponse, request, next) {
 	backendResponse.on('data', chunk => stringBody.push(chunk));
 	backendResponse.on('end', () => {
 		try {
-			// Supplement req with data from BE
+			// Supplement request with data from Backend
 			request[options.key] = JSON.parse(Buffer.concat(stringBody).toString('utf8'));
 			handled = true;
 			next();
@@ -69,6 +69,14 @@ function createHandler({request, response, next, options, backendHttpOptions}) {
 		const contentType = (backendResponse.headers['content-type'] || '').toLowerCase();
 
 		if (contentType === options.requiredContentType || contentType === `${options.requiredContentType}; charset=utf-8`) {
+			// Supplement response with headers from Backend, if needed
+			if (Array.isArray(options.backendHeaders) && backendResponse.headers) {
+				for (const header in backendResponse.headers) {
+					if (options.backendHeaders.includes(header)) {
+						response.set(header, backendResponse.headers[header]);
+					}
+				}
+			}
 			tryReadData(options, backendResponse, request, next);
 		} else {
 			// We don't have the correct content-type, usually this is because a backend responded with a redirect
