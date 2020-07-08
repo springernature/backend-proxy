@@ -273,7 +273,7 @@ describe('Backend Proxy', () => {
 			expect(next).toHaveBeenCalledTimes(1);
 		});
 
-		test('do not supplements, the outgoing HTTP response headers with headers if the backendHeaders option is not an Array', () => {
+		test('do not copy backend headers if options.backendHeaders is not an array', () => {
 			// Given
 			const middleware = backendProxy({
 				...baseOptions,
