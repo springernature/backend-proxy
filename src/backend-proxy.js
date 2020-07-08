@@ -71,11 +71,9 @@ function createHandler({request, response, next, options, backendHttpOptions}) {
 		if (contentType === options.requiredContentType || contentType === `${options.requiredContentType}; charset=utf-8`) {
 			// Supplement response with headers from Backend, if needed
 			if (Array.isArray(options.backendHeaders) && backendResponse.headers) {
-				for (const header in backendResponse.headers) {
-					if (options.backendHeaders.includes(header)) {
-						response.set(header, backendResponse.headers[header]);
-					}
-				}
+				options.backendHeaders
+					.filter(header => backendResponse.headers[header])
+					.forEach(header => response.set(header, backendResponse.headers[header]));
 			}
 			tryReadData(options, backendResponse, request, next);
 		} else {
