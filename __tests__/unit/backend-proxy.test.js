@@ -45,7 +45,8 @@ describe('Backend Proxy', () => {
 		backendResponse.statusCode = 200;
 
 		response = {
-			header: jest.fn()
+			header: jest.fn(),
+			set: jest.fn()
 		};
 	});
 
@@ -210,6 +211,89 @@ describe('Backend Proxy', () => {
 			// Then
 			expect(mockResponse.statusCode).toEqual(200);
 			expect(mockRequest[baseOptions.key]).toEqual(backendBody);
+			expect(next).toHaveBeenCalledTimes(1);
+		});
+
+		test('only copies the backend headers that are specified in the options', () => {
+			// Given
+			const middleware = backendProxy({
+				...baseOptions,
+				backendHeaders: [
+					'dummy-header',
+					'dummy-header2'
+				]
+			});
+
+			backendResponse.headers = {
+				'content-type': `${baseOptions.requiredContentType.toUpperCase()}; charset=utf-8`,
+				'dummy-header': 'dummy-value',
+				'dummy-header2': 'dummy-value2'
+			};
+
+			const backendBody = {
+				field1: 'value1'
+			};
+			const parts = JSON.stringify(backendBody).match(/.{1,2}/g);
+
+			middleware(mockRequest, response, next);
+			proxyRequest.emit('response', backendResponse);
+
+			// When
+			parts.forEach(part => backendResponse.emit('data', Buffer.from(part)));
+			backendResponse.emit('end');
+
+			// Then
+			expect(response.set).toHaveBeenCalledTimes(2);
+			expect(response.set).toHaveBeenCalledWith('dummy-header', 'dummy-value');
+			expect(response.set).toHaveBeenCalledWith('dummy-header2', 'dummy-value2');
+			expect(next).toHaveBeenCalledTimes(1);
+		});
+
+		test('do not supplements, the outgoing HTTP response headers with headers if the backend response has no headers', () => {
+			// Given
+			const middleware = backendProxy({
+				...baseOptions,
+				backendHeaders: ['dummy-header']
+			});
+
+			const backendBody = {
+				field1: 'value1'
+			};
+			const parts = JSON.stringify(backendBody).match(/.{1,2}/g);
+
+			middleware(mockRequest, response, next);
+			proxyRequest.emit('response', backendResponse);
+
+			// When
+			parts.forEach(part => backendResponse.emit('data', Buffer.from(part)));
+			backendResponse.emit('end');
+
+			// Then
+			expect(response.set).not.toHaveBeenCalled();
+			expect(next).toHaveBeenCalledTimes(1);
+		});
+
+		test('do not copy backend headers if options.backendHeaders is not an array', () => {
+			// Given
+			const middleware = backendProxy({
+				...baseOptions,
+				backendHeaders: 'dummy-header'
+			});
+
+			const backendBody = {
+				field1: 'value1'
+			};
+			const parts = JSON.stringify(backendBody).match(/.{1,2}/g);
+
+			middleware(mockRequest, response, next);
+			proxyRequest.emit('response', backendResponse);
+
+			// When
+			parts.forEach(part => backendResponse.emit('data', Buffer.from(part)));
+			backendResponse.emit('end');
+
+			// Then
+			expect(response.set).not.toHaveBeenCalled();
 			expect(next).toHaveBeenCalledTimes(1);
 		});
 

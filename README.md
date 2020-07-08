@@ -33,7 +33,8 @@ app.get('*', (req, res) => res.json(req.backendResponse));
 app.use('/login', backendProxy({
     backend: 'http://other.backebd/login',
     usePath: false,
-    interceptErrors: true
+    interceptErrors: true,
+    backendHeaders: ['set-cookie']
 }), (req, res) => {
 	res.render('login', req.backendResponse);
 });
@@ -45,9 +46,10 @@ The following table describe the properties of the `options` object.
 |---|---|---|---|
 | `backend` | Backend service to proxy requests to | string |  |
 | `requiredContentType` | Backend response content type thats required to allow interception and deserialization | string | `application/json` |
-| `usePath` | Should the incoming HTTP request's path be apended to the `backend` URL | boolean | `true` |
+| `usePath` | Should the incoming HTTP request's path be appended to the `backend` URL | boolean | `true` |
 | `interceptErrors` | Should backend responses with HTTP 400 - 599 be intercepted and raised as express errors. If provided as a function, it takes the backendResponse as parameter and returns a boolean. This gives the frontend the flexibility to decided on a per-response status code basis. | undefined, boolean or function | `undefined` |
 | `key` | The property on the request object that the backend response will be stored under. | string | `backendResponse` |
+| `backendHeaders` | List of headers to copy from a Backend response to the outgoing client response (e.g. `Set-Cookie`...) | string[] |  |
 
 ### `renderBackendResponse(options)`
 
