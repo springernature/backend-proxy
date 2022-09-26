@@ -1,5 +1,11 @@
 # History
 
+## 2.2.1
+
+_26/09/22_
+
+- Addresses Critical, High and Medium vulnerabilities with dependencies. ([springerBuck](https://github.com/springerBuck))
+
 ## 2.2.0
 
 _08/07/20_
