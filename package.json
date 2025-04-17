@@ -14,7 +14,7 @@
     "test:watch": "jest --watch"
   },
   "engines": {
-    "node": ">=8.3.0 <15.0.0"
+    "node": ">=8.3.0 <17.0.0"
   },
   "repository": {
     "type": "git",
