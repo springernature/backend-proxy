@@ -9,7 +9,7 @@ Express/Connect middleware that proxies requests to a backend and renders the re
 
 ## Requirements
 
-Supported node versions 8 - 14
+Supported node versions 8 - 22
 
 ## Installation
 
