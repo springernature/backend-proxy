@@ -2,6 +2,8 @@
 
 Express/Connect middleware that proxies requests to a backend and renders the result.
 
+**This library has only devDependencies, and is no longer being developed.**
+
 ![Version][shield-packagejs-version]
 [![Node.js version support][shield-supported-node-version]][package-json]
 [![build and test](https://github.com/springernature/backend-proxy/actions/workflows/tests.yml/badge.svg)](https://github.com/springernature/backend-proxy/actions/workflows/tests.yml)
@@ -9,7 +11,8 @@ Express/Connect middleware that proxies requests to a backend and renders the re
 
 ## Requirements
 
-Supported node versions 8 - 22
+Supported & tested on node versions 14 - 22.
+Should run fine on 8.3.0+
 
 ## Installation
 
