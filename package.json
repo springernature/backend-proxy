@@ -1,6 +1,6 @@
 {
   "name": "@springernature/backend-proxy",
-  "version": "2.2.0",
+  "version": "3.0.0",
   "description": "Proxies frontend requests to a backend and can render the result",
   "main": "index.js",
   "files": [
