@@ -1,5 +1,14 @@
 # History
 
+## 3.0.0
+
+_17/04/2025_
+
+No change to source code.
+
+ - Now only tested on node versions 14 - 22.
+ - Should still run fine on 8.3.0+ but no longer tested on 8-12 so we can update testing-related dependencies.
+
 ## 2.2.0
 
 _08/07/20_
