@@ -4,8 +4,12 @@ Express/Connect middleware that proxies requests to a backend and renders the re
 
 ![Version][shield-packagejs-version]
 [![Node.js version support][shield-supported-node-version]][package-json]
-[![Build status][ci-image]][ci-status]
+[![build and test](https://github.com/springernature/backend-proxy/actions/workflows/tests.yml/badge.svg)](https://github.com/springernature/backend-proxy/actions/workflows/tests.yml)
 [![MIT licensed][shield-license]][license]
+
+## Requirements
+
+Supported node versions 8 - 14
 
 ## Installation
 
@@ -132,9 +136,6 @@ You can have a look at the [Springer Nature Frontend Playbook][support] for an e
 [MIT][license]
 
 Copyright © 2019 Springer Nature
-
-[ci-image]: https://travis-ci.org/springernature/backend-proxy.svg?branch=master
-[ci-status]: https://travis-ci.org/springernature/backend-proxy
 
 [shield-packagejs-version]: https://img.shields.io/github/package-json/v/springernature/backend-proxy
 [shield-supported-node-version]: https://img.shields.io/node/v/@springernature/backend-proxy
