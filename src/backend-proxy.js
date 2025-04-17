@@ -11,7 +11,7 @@ const defaultOptions = {
 	requiredContentType: 'application/json'
 };
 
-function tryReadData(options, backendResponse, request, next, more, args, to, tesst, linting) {
+function tryReadData(options, backendResponse, request, next) {
 	let handled = false;
 
 	const stringBody = [];
