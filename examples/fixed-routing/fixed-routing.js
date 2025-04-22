@@ -27,14 +27,16 @@ app.set('view engine', 'handlebars');
 
 app.get('/', backendProxy({
 	backend: 'http://localhost:8080/api/first',
-	usePath: false
+	usePath: false,
+	requiredContentType: ''
 }), (request, response) => {
 	response.render('just-text', request.backendResponse);
 });
 
 app.get('/other', backendProxy({
 	backend: 'http://localhost:8080/api/second',
-	usePath: false
+	usePath: false,
+	requiredContentType: ''
 }), (request, response) => {
 	response.render('just-text', request.backendResponse);
 });
