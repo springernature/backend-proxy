@@ -11,7 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "@springernature/backend-proxy": "file:../..",
-    "express": "^4.17.1",
-    "express-handlebars": "^3.1.0"
+    "express": "^4.21.2",
+    "express-handlebars": "^5.3.5"
   }
 }

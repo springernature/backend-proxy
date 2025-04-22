@@ -32,7 +32,8 @@ app.engine('handlebars', handlebars());
 app.set('view engine', 'handlebars');
 
 app.use(backendProxy({
-	backend: 'http://localhost:8080/api'
+	backend: 'http://localhost:8080/api',
+	requiredContentType: ''
 }));
 
 app.use(renderBackendResponse());
