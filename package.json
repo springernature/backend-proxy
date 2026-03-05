@@ -1,6 +1,6 @@
 {
   "name": "@springernature/backend-proxy",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Proxies frontend requests to a backend and can render the result",
   "main": "index.js",
   "files": [
@@ -14,7 +14,7 @@
     "test:watch": "jest --watch"
   },
   "engines": {
-    "node": ">=14 <23"
+    "node": ">=14 <25"
   },
   "repository": {
     "type": "git",
