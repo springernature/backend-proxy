@@ -1,4 +1,4 @@
-const path = require('path');
+const path = require('node:path');
 
 const defaultOptions = {
 	key: 'backendResponse'
@@ -45,11 +45,7 @@ function mockBackendResponse(options) {
 
 			const mockResponse = require(resolvedFile);
 
-			if (typeof mockResponse === 'function') {
-				request[options.key] = mockResponse(request);
-			} else {
-				request[options.key] = mockResponse;
-			}
+			request[options.key] = typeof mockResponse === 'function' ? mockResponse(request) : mockResponse;
 
 			next();
 		} catch (error) {

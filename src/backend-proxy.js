@@ -1,5 +1,5 @@
-const http = require('http');
-const url = require('url');
+const http = require('node:http');
+const url = require('node:url');
 
 const {MiddlewareError} = require('./middleware-error');
 
@@ -71,9 +71,8 @@ function createHandler({request, response, next, options, backendHttpOptions}) {
 		if (contentType === options.requiredContentType || contentType === `${options.requiredContentType}; charset=utf-8`) {
 			// Supplement response with headers from Backend, if needed
 			if (Array.isArray(options.backendHeaders) && backendResponse.headers) {
-				options.backendHeaders
-					.filter(header => backendResponse.headers[header])
-					.forEach(header => response.set(header, backendResponse.headers[header]));
+				for (const header of options.backendHeaders
+					.filter(header => backendResponse.headers[header])) response.set(header, backendResponse.headers[header]);
 			}
 			tryReadData(options, backendResponse, request, next);
 		} else {
@@ -81,12 +80,10 @@ function createHandler({request, response, next, options, backendHttpOptions}) {
 			// or an error
 
 			// If it's a redirect we need to rewrite the URL to be relative (to the frontend)
-			if (backendResponse.statusCode >= 300 && backendResponse.statusCode <= 399 && backendResponse.headers.location) {
-				if (backendResponse.headers.location.includes(backendHttpOptions.host)) {
+			if (backendResponse.statusCode >= 300 && backendResponse.statusCode <= 399 && backendResponse.headers.location && backendResponse.headers.location.includes(backendHttpOptions.host)) {
 					const locationUrl = new url.URL(backendResponse.headers.location);
 					backendResponse.headers.location = locationUrl.pathname + locationUrl.search + locationUrl.hash;
 				}
-			}
 
 			// Proxy the headers and backend response to the client
 			response.header(backendResponse.headers);
