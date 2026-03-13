@@ -2,6 +2,14 @@
 
 ## 3.0.0
 
+_5/03/2026_
+
+No change to source code.
+
+- Now only tested on node versions 14 - 24.
+
+## 3.0.0
+
 _17/04/2025_
 
 No change to source code.
